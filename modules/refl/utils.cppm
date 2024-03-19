@@ -1,0 +1,82 @@
+export module triple.refl:utils;
+import :type;
+
+import std;
+
+namespace triple::refl {
+
+export template<typename T, typename U>
+constexpr std::size_t member_offset(U T::*member) {
+    return (char*)&((T*)nullptr->*member) - (char*)nullptr;
+}
+
+export template<typename T>
+void* member_address(T p) {
+    union {
+        T     p;
+        void* v;
+    } u = {p};
+    return u.v;
+}
+
+export {
+    template<typename>
+    struct MemberTrait;
+
+    template<typename MemberTypeT>
+    struct MemberTrait<MemberTypeT*> {
+        using Type                = MemberTypeT;
+        using PointerToMemberType = MemberTypeT;
+
+        static constexpr bool is_static = true;
+    };
+
+    template<typename ParentTypeT, typename MemberTypeT>
+    struct MemberTrait<MemberTypeT ParentTypeT::*> {
+        using Type                = MemberTypeT;
+        using PointerToMemberType = MemberTypeT ParentTypeT::*;
+        using ParentType          = ParentTypeT;
+
+        static constexpr bool is_static = false;
+    };
+
+    template<typename ParentTypeT, typename MemberTypeT>
+    struct MemberTrait<MemberTypeT ParentTypeT::*const> {
+        using Type                = MemberTypeT;
+        using PointerToMemberType = MemberTypeT ParentTypeT::*;
+        using ParentType          = ParentTypeT;
+
+        static constexpr bool is_static = false;
+    };
+};
+
+template<class>
+struct SignatureTraitBase;
+
+template<class Ret, class... Params>
+struct SignatureTraitBase<Ret(Params...)> {
+    using ReturnType                   = Ret;
+    static constexpr auto params_count = sizeof...(Params);
+
+    static inline std::array<const Type*, params_count> param_types() {
+        return {type<Params>()...};
+    }
+
+    template<size_t Index>
+    struct TypeOfParam {
+        using Type = typename std::tuple_element<Index, std::tuple<Params...>>::type;
+    };
+};
+
+export {
+    template<class>
+    struct SignatureTrait;
+
+    template<class Ret, class... Params>
+    struct SignatureTrait<Ret(Params...)> : SignatureTraitBase<Ret(Params...)> {};
+
+    template<class Ret, class... Params>
+    struct SignatureTrait<Ret(Params...) const> : SignatureTraitBase<Ret(Params...)> {};
+}
+
+}; // namespace triple::refl

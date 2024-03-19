@@ -1,0 +1,112 @@
+module;
+#include <cassert>
+
+export module triple.refl:method;
+import :type;
+import :type_of;
+import :callable;
+import :utils;
+
+namespace triple::refl {
+
+export class Method : public Callable {
+  public:
+    Method(std::string_view name, const std::vector<Param>& params, const QualType& return_type) :
+        Callable(name, params, return_type) {}
+    virtual ~Method() = default;
+
+    virtual Var invoke_variadic(const std::vector<Ref>& args) const = 0;
+
+    const Type* instance_type() const {
+        return m_instance_type;
+    }
+
+  protected:
+    const Type* m_instance_type;
+};
+
+export template<typename P>
+class TMethod : public Method {
+    using MethodType                     = typename MemberTrait<P>::Type;
+    using ParentType                     = typename MemberTrait<P>::ParentType;
+    using ReturnType                     = typename SignatureTrait<MethodType>::ReturnType;
+    constexpr static auto c_params_count = SignatureTrait<MethodType>::params_count;
+    constexpr static auto c_is_static    = MemberTrait<P>::is_static;
+
+    template<size_t Index>
+    using TypeOfParam = typename SignatureTrait<MethodType>::template TypeOfParam<Index>::Type;
+
+  public:
+    TMethod(std::string_view name, P ptr, const std::vector<std::string_view>& param_names) :
+        Method(name, {}, refl::type<ReturnType>()), m_ptr(ptr) {
+        assert(param_names.size() == c_params_count);
+        auto types = SignatureTrait<MethodType>::param_types();
+        for (int i = 0; i < c_params_count; i++) {
+            m_params.emplace_back(param_names[i], types[i]);
+        }
+    }
+
+    Var invoke_variadic(const std::vector<Ref>& args) const override {
+        if (c_is_static) {
+            if (args.size() != c_params_count)
+                return {};
+            return [&]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
+                // static method does not need an instance
+                return invoke_template(Ref(), args[ArgIdx]...);
+            }(std::make_index_sequence<c_params_count>());
+        } else {
+            if (args.size() - 1 != c_params_count)
+                return {};
+            return [&]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
+                // arg[0] is the object instance itself
+                return invoke_template(args[0], args[ArgIdx + 1]...);
+            }(std::make_index_sequence<c_params_count>());
+        }
+    }
+
+  private:
+    template<class... Args, size_t... N>
+    decltype(auto) invoke_template_expand(std::index_sequence<N...>, Ref instance, Args&&... args) const {
+        if constexpr (c_is_static) {
+            return std::invoke(m_ptr, std::forward<Args>(args).template value<TypeOfParam<N>>()...);
+        } else {
+            return std::invoke(
+                m_ptr,
+                instance.value<ParentType>(),
+                std::forward<Args>(args).template value<TypeOfParam<N>>()...
+            );
+        }
+    }
+
+    template<class... Args>
+    Var invoke_template(Ref instance, Args&&... args) const {
+        if constexpr (c_params_count != sizeof...(Args)) {
+            return {};
+        } else {
+            if constexpr (std::same_as<ReturnType, void>) {
+                invoke_template_expand(
+                    std::make_index_sequence<c_params_count>(),
+                    instance,
+                    std::forward<Args>(args)...
+                );
+                return {};
+            } else {
+                auto ret = invoke_template_expand(
+                    std::make_index_sequence<c_params_count>(),
+                    instance,
+                    std::forward<Args>(args)...
+                );
+                if constexpr (std::is_pointer_v<ReturnType> || std::is_reference_v<ReturnType>) {
+                    return Ref(ret);
+                } else {
+                    return Value(ret);
+                }
+            }
+        }
+    }
+
+  private:
+    P m_ptr;
+};
+
+} // namespace triple::refl

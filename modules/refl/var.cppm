@@ -1,0 +1,63 @@
+export module triple.refl:var;
+import :value;
+import :ref;
+
+namespace triple::refl {
+
+export enum class VarMode : unsigned int { Value, Ref };
+
+export class Var {
+  public:
+    Var() : m_mode(VarMode::Value), m_value(), m_ref() {}
+    Var(const Value& val) : m_mode(VarMode::Value), m_value(val), m_ref(m_value.ref()) {}
+    Var(const Ref& ref) : m_mode(VarMode::Ref), m_value(), m_ref(ref) {}
+
+    Var(const Var& other) :
+        m_mode(other.m_mode), m_value(other.m_value), m_ref(m_mode == VarMode::Value ? m_value.ref() : other.m_ref) {}
+
+    Var& operator=(const Var& other) {
+        m_mode = other.m_mode;
+        if (m_mode == VarMode::Value) {
+            m_value = other.m_value;
+            m_ref   = m_value.ref();
+        } else {
+            m_ref = other.m_ref;
+        }
+        return *this;
+    }
+
+    Var& operator=(const Ref& ref) {
+        m_mode = VarMode::Ref;
+        m_ref  = ref;
+        return *this;
+    }
+
+    Ref ref() const {
+        return m_ref;
+    }
+
+    const Type& type() const {
+        return m_ref.type();
+    }
+
+    template<typename T>
+    const T& value() const {
+        return m_ref.value<T>();
+    }
+
+    template<typename T>
+    T& value() {
+        return m_ref.value<T>();
+    }
+
+  private:
+    VarMode m_mode;
+    Value   m_value;
+    Ref     m_ref;
+};
+
+export inline const Type& type(const Var& var) {
+    return var.ref().type();
+}
+
+} // namespace triple::refl

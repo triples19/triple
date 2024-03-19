@@ -1,0 +1,56 @@
+export module triple.base:log;
+
+import std;
+import std.compat;
+
+namespace triple::log {
+
+export enum class LogLevel : std::uint32_t { Trace, Debug, Info, Error, None };
+static constexpr const char* LOG_LEVEL_STR[] = {"trace", "debug", "info", "error", nullptr};
+
+export struct FormatString {
+    std::string_view     str;
+    std::source_location loc;
+    FormatString(const char* str, const std::source_location& loc = std::source_location::current()) :
+        str(str), loc(loc) {}
+};
+
+namespace detail {
+std::string make_log_prefix(LogLevel level, std::source_location loc) {
+    auto get_filename = [](std::source_location location) {
+        const char* full_name  = location.file_name();
+        const char* last_slash = strrchr(full_name, '/') ? strrchr(full_name, '/') : strrchr(full_name, '\\');
+        const char* filename   = last_slash ? last_slash + 1 : full_name;
+        return filename;
+    };
+    using namespace std::literals;
+    return std::format("[{}] [{}:{}] ", LOG_LEVEL_STR[static_cast<int>(level)], get_filename(loc), loc.line());
+}
+
+void log(LogLevel level, const FormatString& format, std::format_args args) {
+    const auto& loc = format.loc;
+    std::cout << make_log_prefix(level, loc) << std::vformat(format.str, args) << "\n";
+}
+} // namespace detail
+
+export template<typename... Args>
+void trace(const FormatString& format, Args&&... args) {
+    detail::log(LogLevel::Trace, format, std::make_format_args(args...));
+}
+
+export template<typename... Args>
+void debug(const FormatString& format, Args&&... args) {
+    detail::log(LogLevel::Debug, format, std::make_format_args(args...));
+}
+
+export template<typename... Args>
+void info(const FormatString& format, Args&&... args) {
+    detail::log(LogLevel::Info, format, std::make_format_args(args...));
+}
+
+export template<typename... Args>
+void error(const FormatString& format, Args&&... args) {
+    detail::log(LogLevel::Error, format, std::make_format_args(args...));
+}
+
+} // namespace triple::log

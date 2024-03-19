@@ -1,0 +1,50 @@
+export module triple.refl:qual_type;
+import :type;
+import :type_of;
+
+namespace triple::refl {
+
+export class QualType {
+  public:
+    enum Flags {
+        None      = 0,
+        Pointer   = (1 << 0),
+        Reference = (1 << 1),
+        Const     = (1 << 2),
+    };
+
+    QualType(const Type* type, Flags flags = None) : m_type(type), m_flags(flags) {}
+
+    template<typename T>
+    QualType() {
+        m_flags = None;
+        if (std::is_pointer_v<T>)
+            m_flags |= Pointer;
+        if (std::is_reference_v<T>)
+            m_flags |= Reference;
+        if (std::is_const_v<T>)
+            m_flags |= Const;
+        m_type = refl::type<T>();
+    }
+
+    bool is_pointer() const {
+        return m_flags & Pointer;
+    }
+
+    bool is_reference() const {
+        return m_flags & Reference;
+    }
+
+    bool is_const() const {
+        return m_flags & Const;
+    }
+
+    const Type* type() const {
+        return m_type;
+    }
+
+  private:
+    const Type*  m_type;
+    unsigned int m_flags;
+};
+} // namespace triple::refl

@@ -1,0 +1,83 @@
+export module triple.refl:callable;
+import :type;
+import :qual_type;
+import :var;
+import :ref;
+
+import std;
+
+namespace triple::refl {
+
+export class Param {
+  public:
+    Param() = default;
+    Param(std::string_view name, const Type* type) : m_name(name), m_type(type) {}
+
+    const Type* type() const {
+        return m_type;
+    }
+
+    std::string_view name() const {
+        return m_name;
+    }
+
+    void set_name(std::string_view name) {
+        m_name = name;
+    }
+
+  private:
+    std::string_view m_name;
+    const Type*      m_type;
+};
+
+export class Callable {
+  public:
+    Callable(std::string_view name, const std::vector<Param>& params, const QualType& return_type) :
+        m_name(name), m_params(params), m_return_type(return_type) {}
+    virtual ~Callable() = default;
+
+    bool validate(const std::vector<Ref>& args) const {
+        if (args.size() != m_params.size())
+            return false;
+
+        for (std::size_t i = 0; i < args.size(); ++i) {
+            if (!args[i].type().is(m_params[i].type()))
+                return false;
+        }
+
+        return true;
+    }
+
+    virtual Var invoke_variadic(const std::vector<Ref>& args) const = 0;
+
+    Var invoke(Ref arg0) const {
+        return invoke_variadic({arg0});
+    }
+
+    Var invoke(Ref arg0, Ref arg1) const {
+        return invoke_variadic({arg0, arg1});
+    }
+
+    Var invoke(Ref arg0, Ref arg1, Ref arg2) const {
+        return invoke_variadic({arg0, arg1, arg2});
+    }
+
+    Var invoke(Ref arg0, Ref arg1, Ref arg2, Ref arg3) const {
+        return invoke_variadic({arg0, arg1, arg2, arg3});
+    }
+
+    Var invoke(Ref arg0, Ref arg1, Ref arg2, Ref arg3, Ref arg4) const {
+        return invoke_variadic({arg0, arg1, arg2, arg3, arg4});
+    }
+
+    Var invoke(Ref arg0, Ref arg1, Ref arg2, Ref arg3, Ref arg4, Ref arg5) const {
+        return invoke_variadic({arg0, arg1, arg2, arg3, arg4, arg5});
+    }
+
+  protected:
+    std::string_view   m_name;
+    std::vector<Param> m_params;
+    QualType           m_return_type;
+};
+
+} // namespace triple::refl

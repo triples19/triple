@@ -1,0 +1,73 @@
+export module triple.refl:ref;
+import :type;
+import :type_of;
+
+import std;
+
+namespace triple::refl {
+
+class Value;
+class Var;
+
+template<class T, class U>
+concept not_same_as = not std::same_as<T, U>;
+
+export class Ref {
+  public:
+    Ref() : m_type(nullptr), m_value(nullptr) {}
+    Ref(void* value, const Type& type) : m_type(&type), m_value(value) {}
+    explicit Ref(const Type& type) : m_type(&type), m_value(nullptr) {}
+
+    template<typename T>
+    Ref(T* object) : m_type(type_of(object)), m_value(object) {}
+
+    template<typename T>
+    Ref(const T* object) : m_type(type_of(object)), m_value(const_cast<T*>(object)) {}
+
+    template<typename T>
+        requires not_same_as<T, Ref>
+    Ref(const T& object) : m_type(type_of(object)), m_value(const_cast<T*>(&object)) {}
+
+    template<typename T>
+        requires not_same_as<T, Ref>
+    Ref(T& object) : m_type(type_of(object)), m_value(&object) {}
+
+    Ref(const Ref& ref)            = default;
+    Ref(Ref&& ref)                 = default;
+    Ref& operator=(const Ref& ref) = default;
+    Ref& operator=(Ref&& ref)      = default;
+
+    inline bool operator==(const Ref& other) const {
+        return m_type == other.m_type && m_value == other.m_value;
+    }
+    inline bool operator!=(const Ref& other) const {
+        return m_type != other.m_type || m_value != other.m_value;
+    }
+    inline explicit operator bool() const {
+        return m_value != nullptr;
+    }
+
+    const Type& type() const {
+        return *m_type;
+    }
+
+    void* address() {
+        return m_value;
+    }
+
+    template<typename T>
+    const T& value() const {
+        return *static_cast<std::remove_reference_t<T>*>(m_value);
+    }
+
+    template<typename T>
+    T& value() {
+        return *static_cast<std::remove_reference_t<T>*>(m_value);
+    }
+
+  private:
+    const Type* m_type;
+    void*       m_value;
+};
+
+} // namespace triple::refl
