@@ -1,3 +1,6 @@
+module;
+#include <type_traits>
+
 export module triple.refl:qual_type;
 import :type;
 import :type_of;
@@ -7,10 +10,10 @@ namespace triple::refl {
 export class QualType {
   public:
     enum Flags {
-        None      = 0,
-        Pointer   = (1 << 0),
+        None = 0,
+        Pointer = (1 << 0),
         Reference = (1 << 1),
-        Const     = (1 << 2),
+        Const = (1 << 2),
     };
 
     QualType(const Type* type, Flags flags = None) : m_type(type), m_flags(flags) {}
@@ -44,7 +47,7 @@ export class QualType {
     }
 
   private:
-    const Type*  m_type;
+    const Type* m_type;
     unsigned int m_flags;
 };
 } // namespace triple::refl

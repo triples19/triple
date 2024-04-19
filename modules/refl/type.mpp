@@ -1,13 +1,14 @@
-export module triple.refl:type;
+module;
+#include <cstdint>
+#include <cstdlib>
 
-import std;
-import std.compat;
+export module triple.refl:type;
 
 namespace triple::refl {
 
 export constexpr unsigned int c_max_types = 1000U;
 
-static uint32_t s_type_index = 2;
+static std::uint32_t s_type_index = 2;
 
 export class Type {
   public:
@@ -18,9 +19,17 @@ export class Type {
     }
     ~Type() {}
 
-    Type(Type&)                  = delete;
+    Type(Type&) = delete;
     Type& operator=(const Type&) = delete;
-    Type(Type&&)                 = delete;
+    Type(Type&&) = delete;
+
+    friend bool operator==(const Type& lhs, const Type& rhs) {
+        return lhs.id() == rhs.id();
+    }
+
+    friend bool operator<(const Type& lhs, const Type& rhs) {
+        return lhs.id() < rhs.id();
+    }
 
     bool is(const Type* type) const {
         if (type == this)
@@ -49,14 +58,18 @@ export class Type {
         return m_size;
     }
 
+    std::uint32_t id() const {
+        return m_id;
+    }
+
   private:
     Type(int) : m_id(1), m_name("Type") {}
 
   private:
     std::uint32_t m_id;
-    const char*   m_name;
-    std::size_t   m_size;
-    const Type*   m_base = nullptr;
+    const char* m_name;
+    std::size_t m_size;
+    const Type* m_base = nullptr;
 };
 
 } // namespace triple::refl

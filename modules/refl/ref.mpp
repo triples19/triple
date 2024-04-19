@@ -1,8 +1,11 @@
+module;
+#include <concepts>
+#include <cstring>
+#include <type_traits>
+
 export module triple.refl:ref;
 import :type;
 import :type_of;
-
-import std;
 
 namespace triple::refl {
 
@@ -10,13 +13,14 @@ class Value;
 class Var;
 
 template<class T, class U>
-concept not_same_as = not std::same_as<T, U>;
+concept not_same_as = !std::same_as<T, U>;
 
 export class Ref {
   public:
     Ref() : m_type(nullptr), m_value(nullptr) {}
-    Ref(void* value, const Type& type) : m_type(&type), m_value(value) {}
-    explicit Ref(const Type& type) : m_type(&type), m_value(nullptr) {}
+    Ref(std::nullptr_t) : m_type(nullptr), m_value(nullptr) {}
+    Ref(void* value, const Type* type) : m_type(type), m_value(value) {}
+    // explicit Ref(const Type& type) : m_type(&type), m_value(nullptr) {}
 
     template<typename T>
     Ref(T* object) : m_type(type_of(object)), m_value(object) {}
@@ -32,10 +36,10 @@ export class Ref {
         requires not_same_as<T, Ref>
     Ref(T& object) : m_type(type_of(object)), m_value(&object) {}
 
-    Ref(const Ref& ref)            = default;
-    Ref(Ref&& ref)                 = default;
+    Ref(const Ref& ref) = default;
+    Ref(Ref&& ref) = default;
     Ref& operator=(const Ref& ref) = default;
-    Ref& operator=(Ref&& ref)      = default;
+    Ref& operator=(Ref&& ref) = default;
 
     inline bool operator==(const Ref& other) const {
         return m_type == other.m_type && m_value == other.m_value;
@@ -47,8 +51,8 @@ export class Ref {
         return m_value != nullptr;
     }
 
-    const Type& type() const {
-        return *m_type;
+    const Type* type() const {
+        return m_type;
     }
 
     void* address() {
@@ -65,9 +69,15 @@ export class Ref {
         return *static_cast<std::remove_reference_t<T>*>(m_value);
     }
 
+    void copy(Ref ref) {
+        if (m_type == ref.type()) {
+            std::memcpy(m_value, ref.m_value, m_type->size());
+        }
+    }
+
   private:
     const Type* m_type;
-    void*       m_value;
+    void* m_value;
 };
 
 } // namespace triple::refl

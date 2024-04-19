@@ -19,7 +19,7 @@ export class Var {
         m_mode = other.m_mode;
         if (m_mode == VarMode::Value) {
             m_value = other.m_value;
-            m_ref   = m_value.ref();
+            m_ref = m_value.ref();
         } else {
             m_ref = other.m_ref;
         }
@@ -28,7 +28,7 @@ export class Var {
 
     Var& operator=(const Ref& ref) {
         m_mode = VarMode::Ref;
-        m_ref  = ref;
+        m_ref = ref;
         return *this;
     }
 
@@ -36,7 +36,7 @@ export class Var {
         return m_ref;
     }
 
-    const Type& type() const {
+    const Type* type() const {
         return m_ref.type();
     }
 
@@ -52,11 +52,11 @@ export class Var {
 
   private:
     VarMode m_mode;
-    Value   m_value;
-    Ref     m_ref;
+    Value m_value;
+    Ref m_ref;
 };
 
-export inline const Type& type(const Var& var) {
+export inline const Type* type(const Var& var) {
     return var.ref().type();
 }
 

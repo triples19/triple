@@ -3,7 +3,8 @@ set_languages("cxxlatest")
 
 triple_dir = os.scriptdir()
 
-add_requires("catch2 3.x")
+add_requires("catch2", "glfw")
 
+includes("thirdparty")
 includes("modules")
 includes("samples/001-helloworld")

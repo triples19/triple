@@ -1,0 +1,7 @@
+export module triple.ecs;
+export import :archetype;
+export import :entity;
+export import :query;
+export import :system;
+export import :utils;
+export import :world;

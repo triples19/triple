@@ -1,0 +1,15 @@
+module;
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+
+export module triple.window;
+
+namespace triple::window {
+
+export class Window {
+  public:
+    Window() = default;
+    ~Window() {}
+};
+
+} // namespace triple::window

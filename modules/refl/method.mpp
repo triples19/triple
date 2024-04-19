@@ -1,5 +1,6 @@
 module;
 #include <cassert>
+#include <string_view>
 
 export module triple.refl:method;
 import :type;
@@ -27,11 +28,11 @@ export class Method : public Callable {
 
 export template<typename P>
 class TMethod : public Method {
-    using MethodType                     = typename MemberTrait<P>::Type;
-    using ParentType                     = typename MemberTrait<P>::ParentType;
-    using ReturnType                     = typename SignatureTrait<MethodType>::ReturnType;
+    using MethodType = typename MemberTrait<P>::Type;
+    using ParentType = typename MemberTrait<P>::ParentType;
+    using ReturnType = typename SignatureTrait<MethodType>::ReturnType;
     constexpr static auto c_params_count = SignatureTrait<MethodType>::params_count;
-    constexpr static auto c_is_static    = MemberTrait<P>::is_static;
+    constexpr static auto c_is_static = MemberTrait<P>::is_static;
 
     template<size_t Index>
     using TypeOfParam = typename SignatureTrait<MethodType>::template TypeOfParam<Index>::Type;

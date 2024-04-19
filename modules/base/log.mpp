@@ -1,7 +1,11 @@
-export module triple.base:log;
+module;
+#include <cstdint>
+#include <format>
+#include <iostream>
+#include <source_location>
+#include <string>
 
-import std;
-import std.compat;
+export module triple.base:log;
 
 namespace triple::log {
 
@@ -9,7 +13,7 @@ export enum class LogLevel : std::uint32_t { Trace, Debug, Info, Error, None };
 static constexpr const char* LOG_LEVEL_STR[] = {"trace", "debug", "info", "error", nullptr};
 
 export struct FormatString {
-    std::string_view     str;
+    std::string_view str;
     std::source_location loc;
     FormatString(const char* str, const std::source_location& loc = std::source_location::current()) :
         str(str), loc(loc) {}
@@ -18,9 +22,9 @@ export struct FormatString {
 namespace detail {
 std::string make_log_prefix(LogLevel level, std::source_location loc) {
     auto get_filename = [](std::source_location location) {
-        const char* full_name  = location.file_name();
+        const char* full_name = location.file_name();
         const char* last_slash = strrchr(full_name, '/') ? strrchr(full_name, '/') : strrchr(full_name, '\\');
-        const char* filename   = last_slash ? last_slash + 1 : full_name;
+        const char* filename = last_slash ? last_slash + 1 : full_name;
         return filename;
     };
     using namespace std::literals;

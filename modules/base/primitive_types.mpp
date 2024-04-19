@@ -1,11 +1,14 @@
-export module triple.base:primitive_types;
+module;
+#include <cstddef>
+#include <cstdint>
+#include <cstdlib>
 
-import std.compat;
+export module triple.base:primitive_types;
 
 namespace triple {
 
-using i8  = int8_t;
-using u8  = uint8_t;
+using i8 = int8_t;
+using u8 = uint8_t;
 using i16 = int16_t;
 using u16 = uint16_t;
 using i32 = int32_t;
@@ -23,5 +26,7 @@ using hash64 = u64;
 
 using id32 = u32;
 using id64 = u64;
+
+using size_t = std::size_t;
 
 } // namespace triple

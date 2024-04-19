@@ -1,7 +1,8 @@
+module;
+#include <type_traits>
+
 export module triple.refl:type_of;
 import :type;
-
-import std;
 
 namespace triple::refl {
 

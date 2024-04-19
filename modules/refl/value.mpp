@@ -1,20 +1,20 @@
+module;
+#include <memory>
+
 export module triple.refl:value;
 import :ref;
-
-import std;
-import std.compat;
 
 namespace triple::refl {
 
 export class Value;
 
 export struct ValueHandlerBase {
-    virtual Ref  ref(const Value& val) const                = 0;
-    virtual void create(Value& val, Ref ref) const          = 0;
-    virtual void destroy(Value& val) const                  = 0;
+    virtual Ref ref(const Value& val) const = 0;
+    virtual void create(Value& val, Ref ref) const = 0;
+    virtual void destroy(Value& val) const = 0;
     virtual void copy(Value& val, const Value& other) const = 0;
-    virtual void move(Value& val, Value& other) const       = 0;
-    virtual bool empty() const                              = 0;
+    virtual void move(Value& val, Value& other) const = 0;
+    virtual bool empty() const = 0;
 };
 
 export struct ValueHandlerEmpty : public ValueHandlerBase {
@@ -72,7 +72,7 @@ export class Value {
         return m_handler->ref(*this);
     }
 
-    const Type& type() const {
+    const Type* type() const {
         return ref().type();
     }
 
@@ -93,7 +93,7 @@ export class Value {
     std::unique_ptr<ValueHandlerBase> m_handler;
     struct Storage {
         uint8_t m_bytes[sizeof(void*) * 3];
-        void*   get_ptr() const {
+        void* get_ptr() const {
             void* ptr = 0;
             memcpy(&ptr, m_bytes, sizeof(void*));
             return ptr;

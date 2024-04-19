@@ -1,4 +1,5 @@
 target("001-helloworld")
     set_kind("binary")
     add_files("main.cpp")
-    add_deps("triple_base", "triple_math", "triple_refl")
+    add_deps("triple_base", "triple_math", "triple_refl", "triple_ecs", "triple_window")
+    add_packages("glfw")

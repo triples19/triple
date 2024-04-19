@@ -1,0 +1,67 @@
+module;
+#include <algorithm>
+#include <cstdint>
+#include <ranges>
+#include <vector>
+
+export module triple.ecs:query;
+import :entity;
+import :archetype;
+import :utils;
+
+namespace triple::ecs {
+
+export class Query {
+    friend class World;
+
+  public:
+    Query(ComponentVector components) : m_components(components) {
+        std::ranges::sort(m_components);
+        m_hash = TypeVectorHasher {}(m_components);
+    }
+
+    std::size_t hash() const {
+        return m_hash;
+    }
+
+    bool matches(Archetype* archetype) {
+        if (archetype->m_components.size() == 0)
+            return false;
+        for (auto component : m_components) {
+            if (std::ranges::find(archetype->m_components, component) == archetype->m_components.end()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    void add_if_matches(Archetype* archetype) {
+        if (matches(archetype) && std::ranges::find(m_matched, archetype) == m_matched.end()) {
+            m_matched.push_back(archetype);
+        }
+    }
+
+    const std::vector<Archetype*>& matched() const {
+        return m_matched;
+    }
+
+    const ComponentVector& components() const {
+        return m_components;
+    }
+
+  private:
+    ComponentVector m_components;
+    std::vector<Archetype*> m_matched;
+    std::size_t m_hash;
+};
+
+} // namespace triple::ecs
+
+namespace std {
+template<>
+struct hash<triple::ecs::Query> {
+    std::size_t operator()(const triple::ecs::Query& query) const {
+        return query.hash();
+    }
+};
+} // namespace std

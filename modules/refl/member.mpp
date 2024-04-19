@@ -1,11 +1,12 @@
+module;
+#include <string_view>
+
 export module triple.refl:member;
 import :type;
 import :type_of;
 import :ref;
 import :var;
 import :utils;
-
-import std;
 
 namespace triple::refl {
 
@@ -14,27 +15,27 @@ export class Member {
     Member(std::string_view name, const Type* type, const Type* parent_type) :
         m_name(name), m_type(type), m_parent_type(parent_type) {}
 
-    virtual Ref  get(Ref obj) const            = 0;
+    virtual Ref get(Ref obj) const = 0;
     virtual void set(Ref obj, Ref value) const = 0;
 
     std::string_view name() const {
         return m_name;
     }
 
-    const Type& type() const {
-        return *m_type;
+    const Type* type() const {
+        return m_type;
     }
 
   protected:
     std::string_view m_name;
-    const Type*      m_type;
-    const Type*      m_parent_type;
+    const Type* m_type;
+    const Type* m_parent_type;
 };
 
 export template<typename P>
 class TMember : public Member {
-    using MemberType                = typename MemberTrait<P>::Type;
-    using ParentType                = typename MemberTrait<P>::ParentType;
+    using MemberType = typename MemberTrait<P>::Type;
+    using ParentType = typename MemberTrait<P>::ParentType;
     constexpr static bool is_static = MemberTrait<P>::is_static;
 
   public:
@@ -53,7 +54,7 @@ class TMember : public Member {
         if constexpr (is_static) {
             *m_ptr = value.value<MemberType>();
         } else {
-            auto& p  = obj.value<ParentType>();
+            auto& p = obj.value<ParentType>();
             p.*m_ptr = value.value<MemberType>();
         }
     }

@@ -1,0 +1,86 @@
+module;
+#include <algorithm>
+#include <cstdint>
+#include <cstdlib>
+#include <vector>
+
+export module triple.ecs:system;
+import :query;
+import :archetype;
+import triple.base;
+import triple.refl;
+
+namespace triple::ecs {
+
+export class Iterator {
+  public:
+    Iterator(Archetype* archetype, std::size_t row) : m_archetype(archetype), m_row(row) {}
+
+    refl::Ref field(const refl::Type* type) {
+        auto iter = std::ranges::find(m_archetype->m_components, type);
+
+        if (iter == m_archetype->m_components.end()) {
+            log::error("Iterator::field: type mismatch");
+            return nullptr;
+        }
+        auto index = iter - m_archetype->m_components.begin();
+        return refl::Ref {m_archetype->m_columns[index].get(m_row), type};
+    }
+
+  private:
+    Archetype* m_archetype;
+    std::size_t m_row;
+};
+
+export using IterFunc = void(*)(Iterator);
+export using SystemId = std::uint32_t;
+
+export class System {
+  public:
+    System(SystemId id, Query* query) : m_query(query) {}
+
+    System& each(IterFunc func) {
+        m_funcs.push_back(func);
+        return *this;
+    }
+
+    void run() {
+        for (auto archetype : m_query->matched()) {
+            for (std::size_t i = 0; i < archetype->m_columns[0].m_count; ++i) {
+                Iterator iter(archetype, i);
+                for (auto func : m_funcs) {
+                    func(iter);
+                }
+            }
+        }
+    }
+
+    SystemId id() const {
+        return m_id;
+    }
+
+  private:
+    template<class F>
+    bool check_func() {
+        using Trait = refl::SignatureTrait<F>;
+        constexpr std::size_t params_count = Trait::params_count;
+        if (params_count != m_query.components().size()) {
+            log::error("System::each: function parameters do not match query components");
+            return false;
+        }
+        for (std::size_t i = 0; i < params_count; ++i) {
+            if (m_query.components()[i]->type() != refl::type<Trait::template TypeOfParam<i>::Type>()) {
+                log::error("System::each: function parameters do not match query components");
+                return false;
+            }
+        }
+        return true;
+    }
+
+  private:
+    SystemId m_id;
+    std::vector<IterFunc> m_funcs;
+    Query* m_query;
+};
+
+} // namespace triple::ecs

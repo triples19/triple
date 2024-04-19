@@ -1,7 +1,10 @@
+module;
+#include <array>
+#include <cstdint>
+#include <cstdlib>
+
 export module triple.refl:utils;
 import :type;
-
-import std;
 
 namespace triple::refl {
 
@@ -13,7 +16,7 @@ constexpr std::size_t member_offset(U T::*member) {
 export template<typename T>
 void* member_address(T p) {
     union {
-        T     p;
+        T p;
         void* v;
     } u = {p};
     return u.v;
@@ -25,7 +28,7 @@ export {
 
     template<typename MemberTypeT>
     struct MemberTrait<MemberTypeT*> {
-        using Type                = MemberTypeT;
+        using Type = MemberTypeT;
         using PointerToMemberType = MemberTypeT;
 
         static constexpr bool is_static = true;
@@ -33,18 +36,18 @@ export {
 
     template<typename ParentTypeT, typename MemberTypeT>
     struct MemberTrait<MemberTypeT ParentTypeT::*> {
-        using Type                = MemberTypeT;
+        using Type = MemberTypeT;
         using PointerToMemberType = MemberTypeT ParentTypeT::*;
-        using ParentType          = ParentTypeT;
+        using ParentType = ParentTypeT;
 
         static constexpr bool is_static = false;
     };
 
     template<typename ParentTypeT, typename MemberTypeT>
     struct MemberTrait<MemberTypeT ParentTypeT::*const> {
-        using Type                = MemberTypeT;
+        using Type = MemberTypeT;
         using PointerToMemberType = MemberTypeT ParentTypeT::*;
-        using ParentType          = ParentTypeT;
+        using ParentType = ParentTypeT;
 
         static constexpr bool is_static = false;
     };
@@ -55,7 +58,7 @@ struct SignatureTraitBase;
 
 template<class Ret, class... Params>
 struct SignatureTraitBase<Ret(Params...)> {
-    using ReturnType                   = Ret;
+    using ReturnType = Ret;
     static constexpr auto params_count = sizeof...(Params);
 
     static inline std::array<const Type*, params_count> param_types() {

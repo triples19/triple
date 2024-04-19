@@ -1,0 +1,70 @@
+module;
+#include <cstdint>
+#include <cstdlib>
+#include <unordered_map>
+#include <vector>
+
+export module triple.ecs:archetype;
+import :entity;
+import triple.refl;
+
+namespace triple::ecs {
+
+using ComponentId = std::uint32_t;
+using ArchetypeId = std::uint32_t;
+using ComponentVector = std::vector<const refl::Type*>;
+
+export struct Column {
+    void* m_elements;
+    std::size_t m_element_size;
+    std::size_t m_count;
+    std::size_t m_capacity;
+
+    Column(std::size_t element_size) : m_element_size(element_size), m_count(0), m_capacity(64) {
+        m_elements = std::malloc(element_size * m_capacity);
+    }
+
+    void set(std::size_t row, const void* element) {
+        if (element == nullptr)
+            return;
+        std::memcpy(static_cast<char*>(m_elements) + row * m_element_size, element, m_element_size);
+    }
+
+    void push_back(const void* element) {
+        if (m_count == m_capacity) {
+            m_capacity *= 2;
+            m_elements = std::realloc(m_elements, m_element_size * m_capacity);
+        }
+        set(m_count, element);
+        ++m_count;
+    }
+
+    void* get(std::size_t row) {
+        return static_cast<char*>(m_elements) + row * m_element_size;
+    }
+
+    void remove(std::size_t row) {
+        std::memcpy(
+            static_cast<char*>(m_elements) + row * m_element_size,
+            static_cast<char*>(m_elements) + (m_count - 1) * m_element_size,
+            m_element_size
+        );
+        --m_count;
+    }
+};
+export struct Archetype {
+    struct Edge {
+        Archetype *m_add, *m_remove;
+    };
+    ArchetypeId m_id;
+    ComponentVector m_components;
+    std::vector<Column> m_columns;
+    std::unordered_map<ComponentId, Edge> m_edges;
+};
+
+export struct EntityRecord {
+    Archetype* m_archetype;
+    std::size_t m_row;
+};
+
+} // namespace triple::ecs
