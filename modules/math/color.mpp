@@ -1,0 +1,60 @@
+module;
+#include <cstdint>
+#include <tuple>
+
+export module triple.math:color;
+
+namespace triple::math {
+
+struct Color3B;
+struct Color4B;
+struct Color4F;
+
+export struct Color3B {
+    uint8_t r {0}, g {0}, b {0};
+
+    Color3B() = default;
+    Color3B(uint8_t r, uint8_t g, uint8_t b) : r {r}, g {g}, b {b} {}
+};
+
+export struct Color4B {
+    uint8_t r {0}, g {0}, b {0}, a {0};
+
+    Color4B() = default;
+    Color4B(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r {r}, g {g}, b {b}, a {a} {}
+};
+
+export struct Color4F {
+    float r {.0f}, g {.0f}, b {.0f}, a {.0f};
+
+    Color4F() = default;
+    Color4F(float r, float g, float b, float a) : r {r}, g {g}, b {b}, a {a} {}
+    Color4F(const Color4B& color) :
+        r {color.a / 255.0f}, g {color.g / 255.0f}, b {color.b / 255.0f}, a {color.a / 255.0f} {}
+
+    std::tuple<float, float, float, float> values() const {
+        return {r, g, b, a};
+    }
+
+    static const Color4F White;
+    static const Color4F Yellow;
+    static const Color4F Green;
+    static const Color4F Blue;
+    static const Color4F Red;
+    static const Color4F Magenta;
+    static const Color4F Black;
+    static const Color4F Orange;
+    static const Color4F Gray;
+};
+
+const Color4F Color4F::White {1, 1, 1, 1};
+const Color4F Color4F::Yellow {1, 1, 0, 1};
+const Color4F Color4F::Green {0, 1, 0, 1};
+const Color4F Color4F::Blue {0, 0, 1, 1};
+const Color4F Color4F::Red {1, 0, 0, 1};
+const Color4F Color4F::Magenta {1, 0, 1, 1};
+const Color4F Color4F::Black {0, 0, 0, 1};
+const Color4F Color4F::Orange {1, 0.5f, 0, 1};
+const Color4F Color4F::Gray {0.65f, 0.65f, 0.65f, 1};
+
+} // namespace triple::math

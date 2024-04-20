@@ -1,5 +1,4 @@
-export module triple.base:platform;
-
+module;
 #define TRIPLE_PLATFORM_WINDOWS 1
 #define TRIPLE_PLATFORM_LINUX 2
 #define TRIPLE_PLATFORM_APPLE 3
@@ -159,6 +158,8 @@ export module triple.base:platform;
 #    define TRIPLE_BEGIN_DISABLE_INIT_LIST_WARNING
 #    define TRIPLE_END_DISABLE_INIT_LIST_WARNING
 #endif
+
+export module triple.base:platform;
 
 namespace triple {
 

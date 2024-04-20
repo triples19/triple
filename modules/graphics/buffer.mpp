@@ -1,0 +1,40 @@
+export module triple.graphics:buffer;
+import :enums;
+import triple.math;
+
+namespace triple::graphics {
+
+export struct Tex2F {
+    float u {.0f}, v {.0f};
+
+    Tex2F() = default;
+    Tex2F(float _u, float _v) : u {_u}, v {_v} {}
+};
+
+export struct V2F_C4F_T2F {
+    math::Vector2 vertices;
+    math::Color4F colors;
+    Tex2F tex_coords;
+};
+
+export struct V2F_C4F_T2F_Quad {
+    V2F_C4F_T2F bl;
+    V2F_C4F_T2F br;
+    V2F_C4F_T2F tl;
+    V2F_C4F_T2F tr;
+};
+
+export class Buffer {
+  public:
+    Buffer(size_t size, BufferType type, BufferUsage usage) : m_size(size), m_type(type), m_usage(usage) {}
+    virtual ~Buffer() = default;
+
+    virtual void update_data(const byte* data) = 0;
+
+  protected:
+    size_t m_size;
+    BufferType m_type;
+    BufferUsage m_usage;
+};
+
+} // namespace triple::graphics

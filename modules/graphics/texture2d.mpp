@@ -1,0 +1,68 @@
+module;
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
+#include <filesystem>
+
+export module triple.graphics:texture2d;
+import :enums;
+import triple.base;
+
+namespace triple::graphics {
+
+export struct SamplerDescriptor {
+    SamplerFilter mag_filter {SamplerFilter::Linear};
+    SamplerFilter min_filter {SamplerFilter::Linear};
+    SamplerAddressMode s_address_mode {SamplerAddressMode::ClampToEdge};
+    SamplerAddressMode t_address_mode {SamplerAddressMode::ClampToEdge};
+};
+
+export struct TextureDescriptor {
+    TextureType texture_type {TextureType::Texture2D};
+    PixelFormat texture_format {PixelFormat::RGBA8888};
+    TextureUsage texture_usage {TextureUsage::Read};
+    int width {0};
+    int height {0};
+    int depth {0};
+    SamplerDescriptor sampler_descriptor {};
+    const byte* data {nullptr};
+};
+
+export class Texture2D {
+  public:
+    virtual bool load(const std::filesystem::path& path) {
+        int width, height, nrChannels;
+        PixelFormat format;
+        auto data = stbi_load(path.string().c_str(), &width, &height, &nrChannels, 0);
+        if (!data) {
+            log::error("Failed to load image");
+            return false;
+        }
+
+        if (nrChannels == 4) {
+            format = PixelFormat::RGBA8888;
+        } else {
+            format = PixelFormat::RGB888;
+        }
+
+        TextureDescriptor desc {
+            .texture_type = TextureType::Texture2D,
+            .texture_format = format,
+            .texture_usage = TextureUsage::Read,
+            .width = width,
+            .height = height,
+            .sampler_descriptor = {},
+            .data = reinterpret_cast<const byte*>(data),
+        };
+        init(desc);
+
+        stbi_image_free(data);
+        return true;
+    }
+
+    virtual void init(const TextureDescriptor& desc) = 0;
+    virtual void update_data(const byte* data, u32 width, u32 height) = 0;
+    virtual void apply(u32 index) const = 0;
+};
+
+} // namespace triple::graphics

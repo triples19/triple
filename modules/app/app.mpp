@@ -1,0 +1,7 @@
+export module triple.app:app;
+
+namespace triple::app {
+
+export class App {};
+
+}

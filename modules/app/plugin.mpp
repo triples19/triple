@@ -1,0 +1,13 @@
+export module triple.app:plugin;
+
+namespace triple::app {
+
+class App;
+
+export class Plugin {
+  public:
+    virtual ~Plugin() = default;
+    virtual void setup(App& app) {}
+};
+
+} // namespace triple::app

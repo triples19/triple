@@ -1,0 +1,63 @@
+module;
+#include <vector>
+
+export module triple.graphics:render_pipeline;
+import :enums;
+import :program;
+import triple.base;
+
+namespace triple::graphics {
+
+export struct VertexAttribute {
+    u32 location;
+    u32 offset;
+    VertexFormat format;
+    bool normalized {false};
+};
+
+export struct VertexLayout {
+    std::vector<VertexAttribute> attributes {};
+    size_t stride {0};
+};
+
+export struct RenderPipelineRasterizationState {
+    bool wireframe {false};
+    CullMode cull_mode {CullMode::Back};
+    FrontFace front_face {FrontFace::CounterClockwise};
+    float line_width {1.0};
+};
+
+export struct RenderPipelineDescriptor {
+    Program* program;
+    VertexLayout vertex_layout;
+    RenderPrimitive render_primitive;
+    RenderPipelineRasterizationState rasterization_state;
+};
+
+export class RenderPipeline {
+  public:
+    RenderPipeline(const RenderPipelineDescriptor& desc) :
+        m_program(desc.program), m_vertex_layout(desc.vertex_layout), m_render_primitive(desc.render_primitive) {}
+
+    Program* program() const {
+        return m_program;
+    }
+    void set_program(Program* p) {
+        m_program = p;
+    }
+
+    const VertexLayout& vertex_layout() const {
+        return m_vertex_layout;
+    }
+
+    RenderPrimitive render_primitive() const {
+        return m_render_primitive;
+    }
+
+  private:
+    Program* m_program;
+    VertexLayout m_vertex_layout;
+    RenderPrimitive m_render_primitive;
+};
+
+} // namespace triple::graphics

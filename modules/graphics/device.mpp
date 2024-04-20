@@ -1,0 +1,53 @@
+module;
+#include <memory>
+
+export module triple.graphics:device;
+import triple.refl;
+import :enums;
+import :shader;
+import :texture2d;
+import :framebuffer;
+import :render_pipeline;
+import :program;
+import :draw_list;
+import :buffer;
+
+namespace triple::graphics {
+
+class RenderDevice;
+static RenderDevice* s_instance = nullptr;
+
+export class RenderDevice {
+  public:
+    static void set_instance(RenderDevice* instance) {
+        s_instance = instance;
+    }
+    static RenderDevice* instance() {
+        return s_instance;
+    }
+
+    virtual ~RenderDevice() = default;
+
+    virtual std::unique_ptr<Shader> create_shader() = 0;
+    virtual const refl::Type* shader_type() = 0;
+
+    virtual std::unique_ptr<Program> create_program() = 0;
+    virtual const refl::Type* program_type() = 0;
+
+    virtual std::unique_ptr<Buffer> create_buffer(size_t size, BufferType type, BufferUsage usage) = 0;
+    virtual const refl::Type* buffer_type() = 0;
+
+    virtual std::unique_ptr<Texture2D> create_texture2d() = 0;
+    virtual const refl::Type* texture2d_type() = 0;
+
+    virtual std::unique_ptr<DrawList> create_draw_list() = 0;
+    virtual const refl::Type* draw_list_type() = 0;
+
+    virtual std::unique_ptr<RenderPipeline> create_render_pipeline(const RenderPipelineDescriptor& desc) = 0;
+    virtual const refl::Type* render_pipeline_type() = 0;
+
+    virtual std::unique_ptr<Framebuffer> create_framebuffer(const FramebufferDescriptor& desc) = 0;
+    virtual const refl::Type* frame_buffer_type() = 0;
+};
+
+} // namespace triple::graphics

@@ -37,7 +37,7 @@ Checks: '-*,
     readability-avoid-const-params-in-decls,
     readability-const-return-type,
     readability-container-size-empty,
-    readability-convert-member-functions-to-static,
+    # readability-convert-member-functions-to-static,
     readability-delete-null-pointer,
     readability-deleted-default,
     readability-make-member-function-const,
@@ -174,9 +174,9 @@ CheckOptions:
   - key: readability-identifier-naming.ClassMemberPrefix
     value: ''
   - key: readability-identifier-naming.PrivateMemberPrefix
-    value: _
+    value: m_
   - key: readability-identifier-naming.ProtectedMemberPrefix
-    value: _
+    value: m_
   - key: readability-identifier-naming.PublicMemberCase
     value: lower_case
   - key: readability-identifier-naming.MethodCase

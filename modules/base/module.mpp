@@ -1,5 +1,6 @@
 export module triple.base;
+export import :file;
 export import :hash;
 export import :log;
-// export import :platform;
+export import :platform;
 export import :primitive_types;

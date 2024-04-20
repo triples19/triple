@@ -1,0 +1,94 @@
+export module triple.graphics:enums;
+import triple.base;
+
+namespace triple::graphics {
+
+export enum class BufferUsage : u32 {
+    Static,
+    Dynamic,
+};
+
+export enum class BufferType : u32 {
+    Vertex,
+    Index,
+};
+
+export enum class VertexFormat : u32 {
+    Float4,
+    Float3,
+    Float2,
+    Float,
+    Int4,
+    Int3,
+    Int2,
+    Int,
+    UShort4,
+    UShort2,
+    UByte4,
+};
+
+export enum class ShaderStage : u32 {
+    Vertex,
+    Fragment,
+};
+
+export enum class BlendOp : u32 {
+    Add,
+    Subtract,
+};
+
+export enum class PixelFormat : u32 {
+    RGBA8888,
+    RGB888,
+    RGBA4444,
+    D16,
+};
+
+export enum class TextureType : u32 {
+    Texture2D,
+    TextureCube,
+};
+
+export enum class TextureUsage : u32 {
+    Read,
+    Write,
+    RenderTarget,
+};
+
+export enum class SamplerFilter : u32 {
+    Nearest,
+    NearestMipmapNearest,
+    NearestMipmapLinear,
+    Linear,
+    LinearMipmapLinear,
+    LinearMipmapNearest,
+    DontCare,
+};
+
+export enum class SamplerAddressMode : u32 {
+    Repeat,
+    MirrorRepeat,
+    ClampToEdge,
+    DontCare,
+};
+
+export enum class RenderPrimitive : u32 {
+    Point,
+    Line,
+    LineStrip,
+    Triangles,
+    TrianglesStrip,
+};
+
+export enum class CullMode : u32 {
+    None,
+    Back,
+    Front,
+};
+
+export enum class FrontFace : u32 {
+    Clockwise,
+    CounterClockwise,
+};
+
+}

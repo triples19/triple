@@ -1,0 +1,33 @@
+module;
+#include <algorithm>
+#include <string>
+#include <vector>
+
+export module triple.graphics:shader;
+import :enums;
+import triple.base;
+
+namespace triple::graphics {
+
+export class Shader {
+  public:
+    bool compile(ShaderStage stage, const std::string& src) {
+        const char* src_ptr = reinterpret_cast<const char*>(src.c_str());
+        return compile_internal(stage, &src_ptr, 1);
+    }
+    bool compile(ShaderStage stage, const std::vector<std::string>& src) {
+        auto ptr = new const char*[src.size()];
+        std::transform(src.begin(), src.end(), ptr, [](const std::string& str) { return str.c_str(); });
+        if (!compile_internal(stage, ptr, src.size())) {
+            delete[] ptr;
+            return false;
+        }
+        delete[] ptr;
+        return true;
+    }
+
+  protected:
+    virtual bool compile_internal(ShaderStage stage, const char** src, size_t size) = 0;
+};
+
+} // namespace triple::graphics

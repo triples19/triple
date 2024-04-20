@@ -37,7 +37,7 @@ export using SystemId = std::uint32_t;
 
 export class System {
   public:
-    System(SystemId id, Query* query) : m_query(query) {}
+    System(SystemId id, Query& query) : m_query(query) {}
 
     System& each(IterFunc func) {
         m_funcs.push_back(func);
@@ -45,7 +45,7 @@ export class System {
     }
 
     void run() {
-        for (auto archetype : m_query->matched()) {
+        for (auto archetype : m_query.matched()) {
             for (std::size_t i = 0; i < archetype->m_columns[0].m_count; ++i) {
                 Iterator iter(archetype, i);
                 for (auto func : m_funcs) {
@@ -80,7 +80,7 @@ export class System {
   private:
     SystemId m_id;
     std::vector<IterFunc> m_funcs;
-    Query* m_query;
+    Query& m_query;
 };
 
 } // namespace triple::ecs

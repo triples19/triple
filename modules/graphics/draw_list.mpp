@@ -1,0 +1,31 @@
+export module triple.graphics:draw_list;
+import :render_pipeline;
+import :framebuffer;
+import :buffer;
+import :texture2d;
+import :enums;
+import triple.math;
+import triple.base;
+
+namespace triple::graphics {
+
+export struct RenderPassDescriptor {
+    Framebuffer* framebuffer {nullptr};
+    bool clear_color {false};
+    math::Color4F clear_color_value {0.f, 0.f, 0.f, 0.f};
+    bool clear_depth {false};
+    float clear_depth_value {0.f};
+};
+
+export class DrawList {
+  public:
+    virtual void begin(const RenderPassDescriptor& desc) = 0;
+    virtual void set_viewport(i32 x, i32 y, u32 w, u32 h) = 0;
+    virtual void bind_render_pipeline(const RenderPipeline* pipeline) = 0;
+    virtual void bind_vertex_buffer(const Buffer* buffer) = 0;
+    virtual void bind_texture(const Texture2D* texture) = 0;
+    virtual void draw(size_t start, size_t count) = 0;
+    virtual void end() = 0;
+};
+
+} // namespace triple::graphics

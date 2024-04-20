@@ -37,7 +37,7 @@ export class World {
         return Entity {id};
     }
 
-    Query* query(ComponentVector components) {
+    Query& query(ComponentVector components) {
         Query* q = new Query(components);
         auto [iter, success] = m_queries.insert({q->hash(), q});
         if (success) {
@@ -47,13 +47,13 @@ export class World {
         } else {
             delete q;
         }
-        return iter->second;
+        return *iter->second;
     }
 
-    System* system(ComponentVector components) {
+    System& system(ComponentVector components) {
         System* s = new System(next_system_id(), query(components));
         m_systems[s->id()] = s;
-        return s;
+        return *s;
     }
 
     void add_component(Entity entity, const refl::Type* component) {

@@ -1,0 +1,3 @@
+export module triple.app;
+export import :app;
+export import :plugin;

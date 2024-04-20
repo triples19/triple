@@ -1,0 +1,18 @@
+module;
+#include <filesystem>
+#include <string>
+
+export module triple.graphics:program;
+import :shader;
+import triple.base;
+
+namespace triple::graphics {
+
+export class Program {
+  public:
+    bool load(const std::filesystem::path& path);
+
+    virtual bool link(const Shader& frag_shader, const Shader& vert_shader) = 0;
+};
+
+} // namespace triple::graphics

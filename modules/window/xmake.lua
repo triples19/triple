@@ -1,5 +1,5 @@
 target("triple_window")
     set_kind("moduleonly")
     add_files("*.mpp")
-    add_deps("glad")
+    add_deps("glad", "triple_app")
     add_packages("glfw")

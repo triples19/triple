@@ -1,0 +1,47 @@
+module;
+#include <algorithm>
+#include <iterator>
+#include <vector>
+
+export module triple.graphics:framebuffer;
+import :texture2d;
+import :enums;
+import triple.base;
+
+namespace triple::graphics {
+
+export struct Attachment {
+    Texture2D* texture {nullptr};
+    u32 mip_level {0};
+    u32 layer {0};
+};
+
+export struct FramebufferDescriptor {
+    std::vector<Attachment> color_attachments;
+    bool has_depth_attachment {false};
+    Attachment depth_attachment;
+};
+
+export class Framebuffer {
+  public:
+    Framebuffer(const FramebufferDescriptor& desc) {
+        std::ranges::transform(
+            desc.color_attachments,
+            std::back_inserter(m_colorAttachments),
+            [](const Attachment& attachment) { return attachment.texture; }
+        );
+        m_depthAttachment = desc.depth_attachment.texture;
+    }
+    Texture2D* color_attachment(u32 index) const {
+        return m_colorAttachments[index];
+    }
+    Texture2D* depth_attachment() const {
+        return m_depthAttachment;
+    }
+
+  protected:
+    std::vector<Texture2D*> m_colorAttachments;
+    Texture2D* m_depthAttachment;
+};
+
+} // namespace triple::graphics

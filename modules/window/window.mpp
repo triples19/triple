@@ -2,14 +2,60 @@ module;
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <stdexcept>
+
 export module triple.window;
+import triple.app;
 
 namespace triple::window {
 
-export class Window {
+export class Window : public app::Plugin {
   public:
     Window() = default;
-    ~Window() {}
+    ~Window() {
+        if (m_window) {
+            glfwDestroyWindow(m_window);
+            glfwTerminate();
+        }
+    }
+
+    void setup(app::App& app) {
+        if (!glfwInit()) {
+            throw std::runtime_error("Failed to initialize GLFW");
+        }
+
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+        m_window = glfwCreateWindow(1280, 720, "Triple", nullptr, nullptr);
+        if (!m_window) {
+            throw std::runtime_error("Failed to create window");
+            glfwTerminate();
+            return;
+        }
+
+        glfwMakeContextCurrent(m_window);
+
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+            throw std::runtime_error("Failed to initialize GLAD");
+        }
+    }
+
+    void poll_events() const {
+        glfwPollEvents();
+    }
+
+    void swap_buffers() const {
+        glfwSwapBuffers(m_window);
+    }
+
+    bool should_close() const {
+        return glfwWindowShouldClose(m_window);
+    }
+
+  private:
+    GLFWwindow* m_window;
 };
 
 } // namespace triple::window

@@ -1,0 +1,19 @@
+module;
+#include <glad/glad.h>
+
+export module triple.graphics.opengl:render_pipeline;
+import triple.graphics;
+import triple.base;
+import :utils;
+import :shader;
+import :texture2d;
+import :framebuffer;
+
+namespace triple::graphics::opengl {
+
+class RenderPipelineOpenGL : public RenderPipeline {
+  public:
+    RenderPipelineOpenGL(const RenderPipelineDescriptor& desc) : RenderPipeline(desc) {}
+};
+
+} // namespace triple::graphics::opengl

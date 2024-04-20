@@ -62,15 +62,15 @@ TEST_CASE("World & E-C-S", "[ecs]") {
     REQUIRE(c.value<Velocity>().y == 8.0f);
 
     auto q1 = world.query({refl::type<Position>(), refl::type<Velocity>()});
-    REQUIRE(q1->matched().size() == 1);
+    REQUIRE(q1.matched().size() == 1);
 
     auto q2 = world.query({refl::type<Position>()});
-    REQUIRE(q2->matched().size() == 2);
+    REQUIRE(q2.matched().size() == 2);
 
     auto q3 = world.query({refl::type<Velocity>()});
-    REQUIRE(q3->matched().size() == 1);
+    REQUIRE(q3.matched().size() == 1);
 
-    auto s1 = world.system({refl::type<Position>(), refl::type<Velocity>()})->each([](ecs::Iterator iter) {
+    auto& s1 = world.system({refl::type<Position>(), refl::type<Velocity>()}).each([](ecs::Iterator iter) {
         auto& pos = iter.field(refl::type<Position>()).value<Position>();
         auto& vel = iter.field(refl::type<Velocity>()).value<Velocity>();
         REQUIRE(pos.x == 5.0f);
@@ -82,7 +82,7 @@ TEST_CASE("World & E-C-S", "[ecs]") {
     });
     s1.run();
 
-    auto s2 = world.system({refl::type<Position>()})->each([](ecs::Iterator iter) {
+    auto& s2 = world.system({refl::type<Position>()}).each([](ecs::Iterator iter) {
         auto& pos = iter.field(refl::type<Position>()).value<Position>();
         REQUIRE(pos.x == 9.0f);
         REQUIRE(pos.y == 10.0f);

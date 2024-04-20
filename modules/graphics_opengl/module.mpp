@@ -1,0 +1,10 @@
+export module triple.graphics.opengl;
+export import :buffer;
+export import :device;
+export import :draw_list;
+export import :framebuffer;
+export import :program;
+export import :render_pipeline;
+export import :shader;
+export import :texture2d;
+export import :utils;

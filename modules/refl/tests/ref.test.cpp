@@ -1,7 +1,5 @@
 import triple.base;
-import triple.math;
 import triple.refl;
-import triple.ecs;
 
 struct Obj {
     int m_id;
