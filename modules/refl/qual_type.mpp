@@ -16,7 +16,7 @@ export class QualType {
         Const = (1 << 2),
     };
 
-    QualType(const Type* type, Flags flags = None) : m_type(type), m_flags(flags) {}
+    QualType(const Type& type, Flags flags = None) : m_type(&type), m_flags(flags) {}
 
     template<typename T>
     QualType() {
@@ -42,8 +42,8 @@ export class QualType {
         return m_flags & Const;
     }
 
-    const Type* type() const {
-        return m_type;
+    const Type& type() const {
+        return *m_type;
     }
 
   private:

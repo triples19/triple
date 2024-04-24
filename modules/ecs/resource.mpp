@@ -1,0 +1,32 @@
+export module triple.ecs:resource;
+import triple.refl;
+import triple.base;
+
+namespace triple::ecs {
+
+export class GenericResource {
+  public:
+    GenericResource(refl::Ref ref) : m_ref(ref) {};
+
+    refl::Ref get() const { return m_ref; }
+
+  private:
+    refl::Ref m_ref;
+};
+
+export template<class T>
+class Resource : GenericResource {
+  public:
+    using ResourceType = T;
+    Resource() : GenericResource(refl::type<T>()) {};
+    Resource(const GenericResource& resource) : GenericResource(resource.get()) {};
+
+    T& get() { return GenericResource::get().value<T>(); }
+    const T& get() const { return GenericResource::get().value<T>(); }
+    T& operator*() { return get(); }
+    const T& operator*() const { return get(); }
+    T* operator->() { return &get(); }
+    const T* operator->() const { return &get(); }
+};
+
+} // namespace triple::ecs

@@ -12,8 +12,8 @@ namespace triple::refl {
 
 export class Member {
   public:
-    Member(std::string_view name, const Type* type, const Type* parent_type) :
-        m_name(name), m_type(type), m_parent_type(parent_type) {}
+    Member(std::string_view name, const Type& type, const Type& parent_type) :
+        m_name(name), m_type(&type), m_parent_type(&parent_type) {}
 
     virtual Ref get(Ref obj) const = 0;
     virtual void set(Ref obj, Ref value) const = 0;
@@ -22,8 +22,8 @@ export class Member {
         return m_name;
     }
 
-    const Type* type() const {
-        return m_type;
+    const Type& type() const {
+        return *m_type;
     }
 
   protected:

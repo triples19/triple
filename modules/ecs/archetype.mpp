@@ -60,6 +60,13 @@ export struct Archetype {
     ComponentVector m_components;
     std::vector<Column> m_columns;
     std::unordered_map<ComponentId, Edge> m_edges;
+
+    std::size_t size() const {
+        if (m_columns.empty())
+            return 0;
+        else
+            return m_columns[0].m_count;
+    }
 };
 
 export struct EntityRecord {

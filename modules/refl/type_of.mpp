@@ -7,9 +7,9 @@ import :type;
 namespace triple::refl {
 
 export template<class T>
-const Type* type() {
+const Type& type() {
     static Type ty("INVALID", 0);
-    return &ty;
+    return ty;
 }
 
 template<typename T>
@@ -31,7 +31,7 @@ template<typename T>
 using raw_type = typename remove_qualifiers<T>::type;
 
 export template<typename T>
-const Type* type_of(T&&) {
+const Type& type_of(T&&) {
     return type<raw_type<T>>();
 }
 

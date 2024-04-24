@@ -4,3 +4,4 @@ export import :hash;
 export import :log;
 export import :platform;
 export import :primitive_types;
+export import :type_traits;

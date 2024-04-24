@@ -1,0 +1,173 @@
+module;
+#include <cassert>
+#include <cmath>
+#include <optional>
+#include <vector>
+
+export module triple.ecs:event;
+import triple.refl;
+import triple.base;
+
+namespace triple::ecs {
+
+class Events;
+
+export struct EventId {
+    size_t id;
+    const Events* events;
+};
+
+export struct EventInstance {
+    EventId id;
+    refl::Value event;
+};
+
+export struct EventSequence {
+    std::vector<EventInstance> events;
+    size_t start_event_count;
+};
+
+export class Events {
+  public:
+    Events(const refl::Type& type) : m_type(type) {
+        m_events_a.start_event_count = 0;
+        m_events_b.start_event_count = 0;
+    }
+
+    EventId send(refl::Value event) {
+        if (event.type() != m_type) {
+            log::error("Event type mismatch: expected {}, got {}", m_type.name(), event.type().name());
+            return {};
+        }
+        EventId id {
+            .id = m_event_count,
+            .events = this,
+        };
+        EventInstance instance {
+            .id = id,
+            .event = event,
+        };
+        m_events_b.events.push_back(instance);
+        m_event_count++;
+        return id;
+    }
+
+    void update() {
+        std::swap(m_events_a, m_events_b);
+        m_events_b.events.clear();
+        m_events_b.start_event_count = m_event_count;
+        assert(m_events_a.start_event_count + m_events_a.events.size() == m_events_b.start_event_count);
+    }
+
+    void reset_start_event_count() {
+        m_events_a.start_event_count = m_event_count;
+        m_events_b.start_event_count = m_event_count;
+    }
+
+    void clear() {
+        reset_start_event_count();
+        m_events_a.events.clear();
+        m_events_b.events.clear();
+    }
+
+    size_t size() const {
+        return m_events_a.events.size() + m_events_b.events.size();
+    }
+
+    size_t oldest_event_count() const {
+        return std::min(m_events_a.start_event_count, m_events_b.start_event_count);
+    }
+
+    size_t oldest_id() const {
+        return m_events_a.start_event_count;
+    }
+
+    const EventSequence& sequence(size_t id) const {
+        if (id < m_events_b.start_event_count) {
+            return m_events_a;
+        } else {
+            return m_events_b;
+        }
+    }
+
+    std::optional<EventInstance> get_event(size_t id) const {
+        if (id < oldest_id()) {
+            return std::nullopt;
+        }
+        auto& seq = sequence(id);
+        // NOTE: index = id.saturating_sub(sequence.start_event_count)?
+        size_t index = id - seq.start_event_count;
+        return seq.events[index];
+    }
+
+  private:
+    const refl::Type& m_type;
+    EventSequence m_events_a;
+    EventSequence m_events_b;
+    size_t m_event_count;
+};
+
+export class GenericEventReader {
+  public:
+    GenericEventReader(const Events& events) : m_events(events), m_last_event_count(events.oldest_event_count()) {}
+
+    std::optional<refl::Value> next() {
+        if (m_last_event_count >= m_events.size()) {
+            return std::nullopt;
+        }
+        auto event = m_events.get_event(m_last_event_count);
+        m_last_event_count++;
+        return event->event;
+    }
+
+    void reset() {
+        m_last_event_count = m_events.oldest_event_count();
+    }
+
+  private:
+    const Events& m_events;
+    size_t m_last_event_count;
+};
+
+export template<class T>
+class EventReader : public GenericEventReader {
+  public:
+    using EventType = T;
+
+    EventReader(const Events& events) : GenericEventReader(events) {}
+    EventReader(const GenericEventReader& reader) : GenericEventReader(reader) {}
+
+    std::optional<T> next() {
+        auto event = GenericEventReader::next();
+        if (!event) {
+            return std::nullopt;
+        }
+        return event->cast<T>();
+    }
+};
+
+export class GenericEventWriter {
+  public:
+    GenericEventWriter(Events& events) : m_events(events) {}
+
+    EventId send(refl::Value event) {
+        return m_events.send(event);
+    }
+
+  private:
+    Events& m_events;
+};
+
+export template<class T>
+class EventWriter : public GenericEventWriter {
+  public:
+    using EventType = T;
+    EventWriter(Events& events) : GenericEventWriter(events) {}
+    EventWriter(const GenericEventWriter& writer) : GenericEventWriter(writer) {}
+
+    EventId send(const T& event) {
+        return GenericEventWriter::send(refl::Value(event));
+    }
+};
+
+} // namespace triple::ecs

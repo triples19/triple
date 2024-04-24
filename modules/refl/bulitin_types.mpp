@@ -3,17 +3,17 @@ import :type_of;
 
 #define T(name)                              \
     template<>                               \
-    const Type* type<name>() {               \
+    const Type& type<name>() {               \
         static Type ty(#name, sizeof(name)); \
-        return &ty;                          \
+        return ty;                           \
     }
 
 export namespace triple::refl {
 
 template<>
-const Type* type<void>() {
+const Type& type<void>() {
     static Type ty("void", 0);
-    return &ty;
+    return ty;
 }
 
 T(signed char);

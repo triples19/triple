@@ -36,7 +36,7 @@ export class Var {
         return m_ref;
     }
 
-    const Type* type() const {
+    const Type& type() const {
         return m_ref.type();
     }
 
@@ -56,7 +56,7 @@ export class Var {
     Ref m_ref;
 };
 
-export inline const Type* type(const Var& var) {
+export inline const Type& type(const Var& var) {
     return var.ref().type();
 }
 

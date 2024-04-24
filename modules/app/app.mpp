@@ -1,7 +1,14 @@
 export module triple.app:app;
+import triple.refl;
 
 namespace triple::app {
 
-export class App {};
+export class App {
+  public:
+    App& add_event(const refl::Type* evt_type) {
 
-}
+        return *this;
+    }
+};
+
+} // namespace triple::app

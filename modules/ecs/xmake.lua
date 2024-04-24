@@ -1,6 +1,7 @@
 target("triple_ecs")
-    set_kind("moduleonly")
-    add_files("*.mpp")
+    set_kind("static")
+    add_files("*.mpp", {public = true})
+    add_files("*.cpp")
     add_deps("triple_base", "triple_refl")
 
 target("triple_ecs-tests")

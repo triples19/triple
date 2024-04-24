@@ -2,85 +2,119 @@ module;
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
+#include <functional>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 export module triple.ecs:system;
 import :query;
 import :archetype;
+import :event;
+import :resource;
 import triple.base;
 import triple.refl;
 
 namespace triple::ecs {
 
-export class Iterator {
+export using SystemId = std::uint32_t;
+class World;
+class System;
+
+export class SystemCommands {
   public:
-    Iterator(Archetype* archetype, std::size_t row) : m_archetype(archetype), m_row(row) {}
+    SystemCommands(System& system);
+    GenericQuery& query(const std::string& name = "");
+    GenericEventReader& event_reader(const refl::Type& event_type);
+    GenericEventWriter& event_writer(const refl::Type& event_type);
+    GenericResource& resource(const refl::Type& resource_type);
 
-    refl::Ref field(const refl::Type* type) {
-        auto iter = std::ranges::find(m_archetype->m_components, type);
-
-        if (iter == m_archetype->m_components.end()) {
-            log::error("Iterator::field: type mismatch");
-            return nullptr;
+    template<class T>
+    decltype(auto) get_param() {
+        using RawT = std::remove_cvref_t<T>;
+        if constexpr (is_specialization<RawT, Query>) {
+            return RawT(query(std::to_string(RawT::hash())));
+        } else if constexpr (is_specialization<RawT, EventReader>) {
+            return event_reader(refl::type<RawT::EventType>());
+        } else if constexpr (is_specialization<RawT, EventWriter>) {
+            return event_writer(refl::type<RawT::EventType>());
+        } else if constexpr (is_specialization<RawT, Resource>) {
+            return resource(refl::type<RawT::ResourceType>());
         }
-        auto index = iter - m_archetype->m_components.begin();
-        return refl::Ref {m_archetype->m_columns[index].get(m_row), type};
     }
 
   private:
-    Archetype* m_archetype;
-    std::size_t m_row;
+    System& m_system;
 };
 
-export using IterFunc = void(*)(Iterator);
-export using SystemId = std::uint32_t;
-
 export class System {
-  public:
-    System(SystemId id, Query& query) : m_query(query) {}
+    friend class SystemCommands;
 
-    System& each(IterFunc func) {
-        m_funcs.push_back(func);
+  public:
+    // using Callback = void (*)(SystemCommands&);
+    using Callback = std::function<void(SystemCommands&)>;
+
+    System(World& world, SystemId id);
+
+    System& callback(Callback func) {
+        m_callback = func;
         return *this;
     }
 
-    void run() {
-        for (auto archetype : m_query.matched()) {
-            for (std::size_t i = 0; i < archetype->m_columns[0].m_count; ++i) {
-                Iterator iter(archetype, i);
-                for (auto func : m_funcs) {
-                    func(iter);
-                }
-            }
-        }
+    template<class... Args>
+    System& callback(void (*F)(Args...)) {
+        m_callback = [F](SystemCommands& commands) {
+            F(commands.get_param<Args>()...); //
+        };
+        return *this;
     }
 
-    SystemId id() const {
-        return m_id;
+    System& add_query(const std::string& name, ComponentVector types);
+    System& add_event_reader(const refl::Type& event_type);
+    System& add_event_wrtier(const refl::Type& event_type);
+    System& add_resource(const refl::Type& resource_type);
+
+    template<class... Args>
+    System& add_query(const std::string& name = "") {
+        return add_query(name, {&refl::type<Args>()...});
     }
+
+    template<class T>
+    System& add_param() {
+        using RawT = std::remove_cvref_t<T>;
+        if constexpr (is_specialization<RawT, Query>) {
+            add_query(std::to_string(T::hash()), T::components());
+        } else if constexpr (is_specialization<RawT, EventReader>) {
+            add_event_reader(refl::type<T::EventType>());
+        } else if constexpr (is_specialization<RawT, EventWriter>) {
+            add_event_wrtier(refl::type<T::EventType>());
+        } else if constexpr (is_specialization<RawT, Resource>) {
+            add_resource(refl::type<T::ResourceType>());
+        }
+        return *this;
+    }
+
+    template<class... Args>
+    System& add_params() {
+        (add_param<Args>(), ...);
+        return *this;
+    }
+
+    void run() { m_callback(m_commands); }
+
+    SystemId id() const { return m_id; }
+
+    World& world() { return m_world; }
 
   private:
-    template<class F>
-    bool check_func() {
-        using Trait = refl::SignatureTrait<F>;
-        constexpr std::size_t params_count = Trait::params_count;
-        if (params_count != m_query.components().size()) {
-            log::error("System::each: function parameters do not match query components");
-            return false;
-        }
-        for (std::size_t i = 0; i < params_count; ++i) {
-            if (m_query.components()[i]->type() != refl::type<Trait::template TypeOfParam<i>::Type>()) {
-                log::error("System::each: function parameters do not match query components");
-                return false;
-            }
-        }
-        return true;
-    }
-
-  private:
+    World& m_world;
     SystemId m_id;
-    std::vector<IterFunc> m_funcs;
-    Query& m_query;
+    Callback m_callback;
+    SystemCommands m_commands;
+    std::unordered_map<std::string, GenericQuery*> m_queries;
+    std::unordered_map<refl::TypeId, GenericEventReader> m_event_readers;
+    std::unordered_map<refl::TypeId, GenericEventWriter> m_event_writers;
+    std::unordered_map<refl::TypeId, GenericResource> m_resources;
 };
 
 } // namespace triple::ecs

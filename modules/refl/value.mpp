@@ -72,7 +72,7 @@ export class Value {
         return m_handler->ref(*this);
     }
 
-    const Type* type() const {
+    const Type& type() const {
         return ref().type();
     }
 
@@ -82,12 +82,12 @@ export class Value {
 
     template<typename T>
     T& cast() {
-        return *static_cast<T*>(m_storage.get_ptr());
+        return *static_cast<T*>((void*)&m_storage);
     }
 
     template<typename T>
     const T& cast() const {
-        return *static_cast<const T*>(m_storage.get_ptr());
+        return *static_cast<const T*>((void*)&m_storage);
     }
 
     std::unique_ptr<ValueHandlerBase> m_handler;
@@ -133,7 +133,7 @@ struct ValueHandlerStack : public ValueHandlerBase {
         return Ref(static_cast<const T*>((void*)&val.m_storage));
     }
     virtual void create(Value& val, Ref ref) const override {
-        new ((void*)&val.m_storage) T(*static_cast<T*>(ref.address()));
+        new ((void*)&val.m_storage) T(ref.value<T>());
     }
     virtual void destroy(Value& val) const override {
         static_cast<T*>((void*)&val.m_storage)->~T();

@@ -13,9 +13,7 @@ export class Entity {
   public:
     Entity(EntityId id) : m_id(id) {}
 
-    EntityId id() const {
-        return m_id;
-    }
+    EntityId id() const { return m_id; }
 
   private:
     World* m_world;

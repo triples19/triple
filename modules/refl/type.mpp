@@ -8,14 +8,15 @@ namespace triple::refl {
 
 export constexpr unsigned int c_max_types = 1000U;
 
-static std::uint32_t s_type_index = 2;
+export using TypeId = std::uint32_t;
+static TypeId s_type_index = 2;
 
 export class Type {
   public:
     explicit Type() : m_id(0), m_name("") {}
     explicit Type(const char* name, std::size_t size) : m_id(s_type_index++), m_name(name), m_size(size) {}
-    explicit Type(const char* name, const Type* base, std::size_t size) : Type(name, size) {
-        m_base = base;
+    explicit Type(const char* name, const Type& base, std::size_t size) : Type(name, size) {
+        m_base = &base;
     }
     ~Type() {}
 
@@ -31,8 +32,8 @@ export class Type {
         return lhs.id() < rhs.id();
     }
 
-    bool is(const Type* type) const {
-        if (type == this)
+    bool is(const Type& type) const {
+        if (type == *this)
             return true;
         else if (m_base)
             return m_base->is(type);
@@ -45,9 +46,9 @@ export class Type {
     //     return this->is(type<T>());
     // }
 
-    static const Type* type() {
+    static const Type& type() {
         static Type ty(0);
-        return &ty;
+        return ty;
     }
 
     const char* name() const {
@@ -58,7 +59,7 @@ export class Type {
         return m_size;
     }
 
-    std::uint32_t id() const {
+    TypeId id() const {
         return m_id;
     }
 
@@ -66,7 +67,7 @@ export class Type {
     Type(int) : m_id(1), m_name("Type") {}
 
   private:
-    std::uint32_t m_id;
+    TypeId m_id;
     const char* m_name;
     std::size_t m_size;
     const Type* m_base = nullptr;

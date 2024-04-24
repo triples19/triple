@@ -13,10 +13,10 @@ namespace triple::refl {
 export class Param {
   public:
     Param() = default;
-    Param(std::string_view name, const Type* type) : m_name(name), m_type(type) {}
+    Param(std::string_view name, const Type& type) : m_name(name), m_type(&type) {}
 
-    const Type* type() const {
-        return m_type;
+    const Type& type() const {
+        return *m_type;
     }
 
     std::string_view name() const {
@@ -43,7 +43,7 @@ export class Callable {
             return false;
 
         for (std::size_t i = 0; i < args.size(); ++i) {
-            if (!args[i].type()->is(m_params[i].type()))
+            if (!args[i].type().is(m_params[i].type()))
                 return false;
         }
 

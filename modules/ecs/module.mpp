@@ -1,7 +1,9 @@
 export module triple.ecs;
 export import :archetype;
 export import :entity;
+export import :event;
 export import :query;
+export import :resource;
 export import :system;
 export import :utils;
 export import :world;

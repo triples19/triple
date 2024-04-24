@@ -1,0 +1,21 @@
+export module triple.ecs:commands;
+import triple.refl;
+import triple.base;
+
+namespace triple::ecs {
+
+class World;
+class Entity;
+
+export class Commands {
+  public:
+    Commands(World& world);
+
+    Entity spawn_entity();
+    
+
+  private:
+    World& m_world;
+};
+
+} // namespace triple::ecs
