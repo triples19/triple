@@ -8,18 +8,20 @@ module;
 #include <vector>
 
 export module triple.ecs:system;
+import triple.base;
+import triple.refl;
+import :commands;
 import :query;
 import :archetype;
 import :event;
 import :resource;
-import triple.base;
-import triple.refl;
 
 namespace triple::ecs {
 
 export using SystemId = std::uint32_t;
-class World;
-class System;
+export class World;
+export class System;
+export class Commands;
 
 export class SystemCommands {
   public:
@@ -28,6 +30,7 @@ export class SystemCommands {
     GenericEventReader& event_reader(const refl::Type& event_type);
     GenericEventWriter& event_writer(const refl::Type& event_type);
     GenericResource& resource(const refl::Type& resource_type);
+    Commands commands();
 
     template<class T>
     decltype(auto) get_param() {
@@ -40,6 +43,8 @@ export class SystemCommands {
             return event_writer(refl::type<RawT::EventType>());
         } else if constexpr (is_specialization<RawT, Resource>) {
             return resource(refl::type<RawT::ResourceType>());
+        } else if constexpr (std::same_as<RawT, Commands>) {
+            return commands();
         }
     }
 

@@ -61,9 +61,7 @@ struct SignatureTraitBase<Ret(Params...)> {
     using ReturnType = Ret;
     static constexpr auto params_count = sizeof...(Params);
 
-    static inline std::array<const Type*, params_count> param_types() {
-        return {&type<Params>()...};
-    }
+    static inline std::array<const Type*, params_count> param_types() { return {&type<Params>()...}; }
 
     template<size_t Index>
     struct TypeOfParam {

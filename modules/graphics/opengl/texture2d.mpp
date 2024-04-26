@@ -55,9 +55,7 @@ export class Texture2DOpenGL : public Texture2D {
         opengl_check_error();
     }
 
-    GLuint handler() const {
-        return m_texture;
-    }
+    GLuint handler() const { return m_texture; }
 
   private:
     GLuint m_texture {0};

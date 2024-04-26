@@ -18,16 +18,12 @@ export struct ValueHandlerBase {
 };
 
 export struct ValueHandlerEmpty : public ValueHandlerBase {
-    virtual Ref ref(const Value& val) const override {
-        return Ref();
-    }
+    virtual Ref ref(const Value& val) const override { return Ref(); }
     virtual void create(Value& val, Ref ref) const override {}
     virtual void destroy(Value& val) const override {}
     virtual void copy(Value& val, const Value& other) const override {}
     virtual void move(Value& val, Value& other) const override {}
-    virtual bool empty() const override {
-        return true;
-    }
+    virtual bool empty() const override { return true; }
 };
 
 export class Value {
@@ -37,17 +33,11 @@ export class Value {
     template<typename T>
     Value(const T& obj);
 
-    ~Value() {
-        m_handler->destroy(*this);
-    }
+    ~Value() { m_handler->destroy(*this); }
 
-    Value(const Value& other) : Value() {
-        other.m_handler->copy(*this, other);
-    }
+    Value(const Value& other) : Value() { other.m_handler->copy(*this, other); }
 
-    Value(Value&& other) : Value() {
-        other.m_handler->move(*this, other);
-    }
+    Value(Value&& other) : Value() { other.m_handler->move(*this, other); }
 
     Value& operator=(const Value& rhs) {
         if (m_handler == rhs.m_handler)
@@ -68,17 +58,11 @@ export class Value {
         return *this;
     }
 
-    Ref ref() const {
-        return m_handler->ref(*this);
-    }
+    Ref ref() const { return m_handler->ref(*this); }
 
-    const Type& type() const {
-        return ref().type();
-    }
+    const Type& type() const { return ref().type(); }
 
-    bool empty() const {
-        return m_handler->empty();
-    }
+    bool empty() const { return m_handler->empty(); }
 
     template<typename T>
     T& cast() {
@@ -98,56 +82,34 @@ export class Value {
             memcpy(&ptr, m_bytes, sizeof(void*));
             return ptr;
         }
-        void set_ptr(void* ptr) {
-            memcpy(m_bytes, &ptr, sizeof(void*));
-        }
+        void set_ptr(void* ptr) { memcpy(m_bytes, &ptr, sizeof(void*)); }
     } m_storage;
 };
 
 export template<typename T>
 struct ValueHandlerHeap : public ValueHandlerBase {
-    virtual Ref ref(const Value& val) const override {
-        return Ref(static_cast<const T*>(val.m_storage.get_ptr()));
-    }
-    virtual void create(Value& val, Ref ref) const override {
-        val.m_storage.set_ptr(new T(ref.value<T>()));
-    }
-    virtual void destroy(Value& val) const override {
-        delete static_cast<T*>(val.m_storage.get_ptr());
-    }
+    virtual Ref ref(const Value& val) const override { return Ref(static_cast<const T*>(val.m_storage.get_ptr())); }
+    virtual void create(Value& val, Ref ref) const override { val.m_storage.set_ptr(new T(ref.value<T>())); }
+    virtual void destroy(Value& val) const override { delete static_cast<T*>(val.m_storage.get_ptr()); }
     virtual void copy(Value& val, const Value& other) const override {
         create(val, ref(other));
         val.m_handler = std::make_unique<ValueHandlerHeap<T>>();
     }
-    virtual void move(Value& val, Value& other) const override {
-        val.swap(other);
-    }
-    virtual bool empty() const override {
-        return false;
-    }
+    virtual void move(Value& val, Value& other) const override { val.swap(other); }
+    virtual bool empty() const override { return false; }
 };
 
 export template<typename T>
 struct ValueHandlerStack : public ValueHandlerBase {
-    virtual Ref ref(const Value& val) const override {
-        return Ref(static_cast<const T*>((void*)&val.m_storage));
-    }
-    virtual void create(Value& val, Ref ref) const override {
-        new ((void*)&val.m_storage) T(ref.value<T>());
-    }
-    virtual void destroy(Value& val) const override {
-        static_cast<T*>((void*)&val.m_storage)->~T();
-    }
+    virtual Ref ref(const Value& val) const override { return Ref(static_cast<const T*>((void*)&val.m_storage)); }
+    virtual void create(Value& val, Ref ref) const override { new ((void*)&val.m_storage) T(ref.value<T>()); }
+    virtual void destroy(Value& val) const override { static_cast<T*>((void*)&val.m_storage)->~T(); }
     virtual void copy(Value& val, const Value& other) const override {
         create(val, ref(other));
         val.m_handler = std::make_unique<ValueHandlerStack<T>>();
     }
-    virtual void move(Value& val, Value& other) const override {
-        val.swap(other);
-    }
-    virtual bool empty() const override {
-        return false;
-    }
+    virtual void move(Value& val, Value& other) const override { val.swap(other); }
+    virtual bool empty() const override { return false; }
 };
 
 template<typename T>

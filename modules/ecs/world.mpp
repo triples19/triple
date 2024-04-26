@@ -2,8 +2,12 @@ module;
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <map>
+#include <memory>
+#include <unordered_map>
 
 export module triple.ecs:world;
+import triple.refl;
 import :entity;
 import :event;
 import :archetype;
@@ -11,9 +15,14 @@ import :utils;
 import :query;
 import :system;
 import :resource;
-import triple.refl;
+import :schedule;
 
 namespace triple::ecs {
+
+export struct EntityRecord {
+    Archetype* m_archetype;
+    std::size_t m_row;
+};
 
 export class World {
   public:
@@ -32,15 +41,22 @@ export class World {
         for (Archetype* archetype : m_archetypes) {
             delete archetype;
         }
-        for (auto [_, event] : m_events) {
-            delete event;
-        }
     }
 
     Entity entity() {
-        EntityId id = next_entity_id();
+        Entity id = next_entity_id();
         m_entity_index[id] = EntityRecord {m_root_archetype, 0};
-        return Entity {id};
+        return id;
+    }
+
+    void despawn(Entity entity) {
+        EntityRecord& record = m_entity_index[entity];
+        Archetype* archetype = record.m_archetype;
+        std::size_t row = record.m_row;
+        for (auto& column : archetype->m_columns) {
+            column.remove(row);
+        }
+        m_entity_index.erase(entity);
     }
 
     GenericQuery& query(ComponentVector components) {
@@ -72,8 +88,17 @@ export class World {
         return system().add_params<Args...>().callback(F);
     }
 
+    template<class... Args>
+    SystemId add_system(ScheduleId schedule, void (*F)(Args...)) {
+        System& s = system(F);
+        get_schedule(schedule).add_system(s.id());
+        return s.id();
+    }
+
+    void run_system(SystemId id) { m_systems[id]->run(); }
+
     void add_component(Entity entity, const refl::Type& component) {
-        EntityRecord& record = m_entity_index[entity.id()];
+        EntityRecord& record = m_entity_index[entity];
         Archetype* archetype = record.m_archetype;
         auto& next_archetype = archetype->m_edges[component.id()].m_add;
         if (next_archetype == nullptr) {
@@ -81,7 +106,7 @@ export class World {
             components.push_back(&component);
             next_archetype = create_archetype(components);
         }
-        move_entity(archetype, entity.id(), next_archetype);
+        move_entity(archetype, entity, next_archetype);
     }
 
     template<class T>
@@ -95,13 +120,13 @@ export class World {
         c.copy(component);
     }
 
-    template<class T>
-    void add_component(Entity entity, const T& component) {
-        add_component(entity, refl::Ref {component});
-    }
+    // template<class T>
+    // void add_component(Entity entity, T&& component) {
+    //     add_component(entity, refl::Ref {std::forward<T>(component)});
+    // }
 
     void remove_component(Entity entity, const refl::Type& component) {
-        EntityRecord& record = m_entity_index[entity.id()];
+        EntityRecord& record = m_entity_index[entity];
         Archetype* archetype = record.m_archetype;
         Archetype*& next_archetype = archetype->m_edges[component.id()].m_remove;
         if (next_archetype == nullptr) {
@@ -109,7 +134,7 @@ export class World {
             components.erase(std::remove(components.begin(), components.end(), &component), components.end());
             next_archetype = create_archetype(components);
         }
-        move_entity(archetype, entity.id(), next_archetype);
+        move_entity(archetype, entity, next_archetype);
     }
 
     template<class T>
@@ -118,7 +143,7 @@ export class World {
     }
 
     refl::Ref get_component(Entity entity, const refl::Type& component_type) {
-        auto& record = m_entity_index[entity.id()];
+        auto& record = m_entity_index[entity];
         auto* archetype = record.m_archetype;
         auto iter = std::ranges::find(archetype->m_components, &component_type);
         if (iter == archetype->m_components.end()) {
@@ -135,7 +160,7 @@ export class World {
 
     Archetype* get_archetype(ComponentVector components) {
         std::ranges::sort(components);
-        auto iter = m_archetype_map.find(components);
+        auto iter = m_archetype_map.find(TypeVectorHasher {}(components));
         if (iter != m_archetype_map.end()) {
             return iter->second;
         } else {
@@ -146,7 +171,7 @@ export class World {
     void add_event(const refl::Type& event_type) {
         if (m_events.find(event_type.id()) != m_events.end())
             return;
-        m_events[event_type.id()] = new Events {event_type};
+        m_events[event_type.id()] = std::make_unique<Events>(event_type);
     }
 
     template<class E>
@@ -164,16 +189,12 @@ export class World {
         return get_events(refl::type<E>());
     }
 
-    void add_resource(const refl::Value& resource) { m_resources[resource.type().id()] = resource; }
-
-    template<class R>
-    void add_resource(const R& resource) {
-        add_resource(refl::Value {resource});
-    }
+    // void add_resource(const refl::Type& resource) { m_resources[resource.type().id()] = resource; }
 
     template<class R>
     void add_resource() {
-        add_resource(refl::Value {R {}});
+        // m_resources[refl::type<R>().id()] = R {};
+        m_resources.emplace(refl::type<R>().id(), R {});
     }
 
     GenericResource get_resource(const refl::Type& resource_type) {
@@ -186,9 +207,23 @@ export class World {
         return get_resource(refl::type<R>());
     }
 
+    void add_schedule(ScheduleId id) { m_schedules[id] = std::make_unique<Schedule>(id); }
+
+    Schedule& get_schedule(ScheduleId id) {
+        assert(m_schedules.find(id) != m_schedules.end());
+        return *m_schedules[id];
+    }
+
+    void run_schedule(ScheduleId id) {
+        auto& schedule = get_schedule(id);
+        for (SystemId system_id : schedule.systems()) {
+            run_system(system_id);
+        }
+    }
+
   private:
-    EntityId next_entity_id() {
-        static EntityId id = 0;
+    Entity next_entity_id() {
+        static Entity id = 0;
         return ++id;
     }
 
@@ -216,7 +251,7 @@ export class World {
         }
 
         // add to map
-        m_archetype_map[archetype->m_components] = archetype;
+        m_archetype_map[archetype->hash()] = archetype;
         // refresh query list
         for (auto& [_, query] : m_queries) {
             query->add_if_matches(archetype);
@@ -224,7 +259,7 @@ export class World {
         return archetype;
     }
 
-    std::size_t move_entity(Archetype* from, EntityId entity, Archetype* to) {
+    std::size_t move_entity(Archetype* from, Entity entity, Archetype* to) {
         std::size_t row = m_entity_index[entity].m_row;
         std::size_t i = 0, j = 0;
         while (i < from->m_components.size() && j < to->m_components.size()) {
@@ -260,15 +295,20 @@ export class World {
     }
 
   private:
-    std::unordered_map<EntityId, EntityRecord> m_entity_index;
     std::vector<Archetype*> m_archetypes;
     Archetype* m_root_archetype;
 
-    std::unordered_map<ComponentVector, Archetype*, TypeVectorHasher> m_archetype_map;
-    std::unordered_map<std::size_t, GenericQuery*> m_queries;
-    std::unordered_map<SystemId, System*> m_systems;
-    std::unordered_map<refl::TypeId, Events*> m_events;
-    std::unordered_map<refl::TypeId, refl::Value> m_resources;
+    // NOTE: Strange compiler internal error happening here if I use std::unordered_map
+    // So I'm using std::map instead for now
+    // "fatal error C1001: Internal compiler error. (compiler file 'msc1.cpp', line 1587)"
+
+    std::map<std::size_t, EntityRecord> m_entity_index;
+    std::map<std::size_t, Archetype*> m_archetype_map;
+    std::map<std::size_t, GenericQuery*> m_queries;
+    std::map<SystemId, System*> m_systems;
+    std::map<refl::TypeId, std::unique_ptr<Events>> m_events;
+    std::map<refl::TypeId, refl::Value> m_resources;
+    std::map<ScheduleId, std::unique_ptr<Schedule>> m_schedules;
 };
 
 } // namespace triple::ecs

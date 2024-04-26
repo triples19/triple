@@ -13,9 +13,7 @@ namespace triple::graphics::opengl {
 
 export class ProgramOpenGL : public graphics::Program {
   public:
-    ProgramOpenGL() {
-        m_program = glCreateProgram();
-    }
+    ProgramOpenGL() { m_program = glCreateProgram(); }
 
     ~ProgramOpenGL() {
         if (m_program) {
@@ -46,9 +44,7 @@ export class ProgramOpenGL : public graphics::Program {
         return opengl_check_error();
     }
 
-    GLuint handler() const {
-        return m_program;
-    }
+    GLuint handler() const { return m_program; }
 
   private:
     GLuint m_program;

@@ -1,19 +1,24 @@
+module;
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <numeric>
+
 export module triple.math:common;
-import std;
 
 export namespace triple::math {
 
-constexpr float POS_INFINITY   = std::numeric_limits<float>::infinity();
-constexpr float NEG_INFINITY   = -std::numeric_limits<float>::infinity();
-constexpr float PI             = 3.14159265358979323846264338327950288f;
-constexpr float ONE_OVER_PI    = 1.0f / PI;
-constexpr float TWO_PI         = 2.0f * PI;
-constexpr float HALF_PI        = 0.5f * PI;
-constexpr float DEG2RAD        = PI / 180.0f;
-constexpr float RAD2DEG        = 180.0f / PI;
-constexpr float LOG2           = 0.30102999566f;
-constexpr float EPSILON        = 1e-6f;
-constexpr float FLOAT_EPSILON  = 1.192092896e-07f;
+constexpr float POS_INFINITY = std::numeric_limits<float>::infinity();
+constexpr float NEG_INFINITY = -std::numeric_limits<float>::infinity();
+constexpr float PI = 3.14159265358979323846264338327950288f;
+constexpr float ONE_OVER_PI = 1.0f / PI;
+constexpr float TWO_PI = 2.0f * PI;
+constexpr float HALF_PI = 0.5f * PI;
+constexpr float DEG2RAD = PI / 180.0f;
+constexpr float RAD2DEG = 180.0f / PI;
+constexpr float LOG2 = 0.30102999566f;
+constexpr float EPSILON = 1e-6f;
+constexpr float FLOAT_EPSILON = 1.192092896e-07f;
 constexpr float DOUBLE_EPSILON = 2.2204460492503131e-016;
 
 using std::abs;

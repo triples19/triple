@@ -28,16 +28,14 @@ export class Framebuffer {
         std::ranges::transform(
             desc.color_attachments,
             std::back_inserter(m_colorAttachments),
-            [](const Attachment& attachment) { return attachment.texture; }
+            [](const Attachment& attachment) {
+                return attachment.texture;
+            }
         );
         m_depthAttachment = desc.depth_attachment.texture;
     }
-    Texture2D* color_attachment(u32 index) const {
-        return m_colorAttachments[index];
-    }
-    Texture2D* depth_attachment() const {
-        return m_depthAttachment;
-    }
+    Texture2D* color_attachment(u32 index) const { return m_colorAttachments[index]; }
+    Texture2D* depth_attachment() const { return m_depthAttachment; }
 
   protected:
     std::vector<Texture2D*> m_colorAttachments;

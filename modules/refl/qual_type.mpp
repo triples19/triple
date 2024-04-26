@@ -30,21 +30,13 @@ export class QualType {
         m_type = refl::type<T>();
     }
 
-    bool is_pointer() const {
-        return m_flags & Pointer;
-    }
+    bool is_pointer() const { return m_flags & Pointer; }
 
-    bool is_reference() const {
-        return m_flags & Reference;
-    }
+    bool is_reference() const { return m_flags & Reference; }
 
-    bool is_const() const {
-        return m_flags & Const;
-    }
+    bool is_const() const { return m_flags & Const; }
 
-    const Type& type() const {
-        return *m_type;
-    }
+    const Type& type() const { return *m_type; }
 
   private:
     const Type* m_type;

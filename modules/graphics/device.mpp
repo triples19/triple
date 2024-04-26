@@ -19,12 +19,8 @@ static RenderDevice* s_instance = nullptr;
 
 export class RenderDevice {
   public:
-    static void set_instance(RenderDevice* instance) {
-        s_instance = instance;
-    }
-    static RenderDevice* instance() {
-        return s_instance;
-    }
+    static void set_instance(RenderDevice* instance) { s_instance = instance; }
+    static RenderDevice* instance() { return s_instance; }
 
     virtual ~RenderDevice() = default;
 

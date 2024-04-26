@@ -4,4 +4,5 @@ target("triple_graphics")
     add_files("*.cpp")
     add_deps("triple_base", "triple_refl", "triple_math")
     add_packages("stb")
-    -- add_includedirs("C:\\Users\\ShiSS\\AppData\\Local\\.xmake\\packages\\s\\stb\\2023.12.15\\1e9afa0be82a4afeaeaa89283f7b4e4d\\include\\stb")
+
+includes("opengl")

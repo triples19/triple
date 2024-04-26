@@ -7,7 +7,7 @@ import triple.base;
 using namespace triple;
 
 struct MyRes {
-    int value;
+    int value {0};
 };
 
 namespace triple::refl {
@@ -20,12 +20,12 @@ const Type& type<MyRes>() {
 
 TEST_CASE("Resource", "[ecs]") {
     ecs::World world;
-    world.add_resource(MyRes {0});
+    world.add_resource<MyRes>();
     REQUIRE(world.get_resource<MyRes>()->value == 0);
     world.get_resource<MyRes>()->value = 42;
 
     world
-        .system(+[](ecs::Resource<MyRes> res) {
+        .system(+[](ecs::Resource<MyRes> res, ecs::Commands commands) {
             REQUIRE(res->value == 42);
             res->value = 52;
         })

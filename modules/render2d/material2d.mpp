@@ -1,0 +1,18 @@
+export module triple.render2d:material2d;
+import triple.graphics;
+
+namespace triple::render2d {
+
+class Material2D {
+  public:
+    Material2D(graphics::Program& program, graphics::Texture2D& texture) : m_program(program), m_texture(texture) {}
+
+    graphics::Program& program() { return m_program; }
+    graphics::Texture2D& texture() { return m_texture; }
+
+  private:
+    graphics::Program& m_program;
+    graphics::Texture2D& m_texture;
+};
+
+} // namespace triple::render2d

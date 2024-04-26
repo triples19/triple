@@ -41,23 +41,13 @@ export class Ref {
     Ref& operator=(const Ref& ref) = default;
     Ref& operator=(Ref&& ref) = default;
 
-    inline bool operator==(const Ref& other) const {
-        return m_type == other.m_type && m_value == other.m_value;
-    }
-    inline bool operator!=(const Ref& other) const {
-        return m_type != other.m_type || m_value != other.m_value;
-    }
-    inline explicit operator bool() const {
-        return m_value != nullptr;
-    }
+    inline bool operator==(const Ref& other) const { return m_type == other.m_type && m_value == other.m_value; }
+    inline bool operator!=(const Ref& other) const { return m_type != other.m_type || m_value != other.m_value; }
+    inline explicit operator bool() const { return m_value != nullptr; }
 
-    const Type& type() const {
-        return *m_type;
-    }
+    const Type& type() const { return *m_type; }
 
-    void* address() {
-        return m_value;
-    }
+    void* address() { return m_value; }
 
     template<typename T>
     const T& value() const {

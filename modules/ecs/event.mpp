@@ -10,7 +10,7 @@ import triple.base;
 
 namespace triple::ecs {
 
-class Events;
+export class Events;
 
 export struct EventId {
     size_t id;
@@ -70,17 +70,11 @@ export class Events {
         m_events_b.events.clear();
     }
 
-    size_t size() const {
-        return m_events_a.events.size() + m_events_b.events.size();
-    }
+    size_t size() const { return m_events_a.events.size() + m_events_b.events.size(); }
 
-    size_t oldest_event_count() const {
-        return std::min(m_events_a.start_event_count, m_events_b.start_event_count);
-    }
+    size_t oldest_event_count() const { return std::min(m_events_a.start_event_count, m_events_b.start_event_count); }
 
-    size_t oldest_id() const {
-        return m_events_a.start_event_count;
-    }
+    size_t oldest_id() const { return m_events_a.start_event_count; }
 
     const EventSequence& sequence(size_t id) const {
         if (id < m_events_b.start_event_count) {
@@ -120,9 +114,7 @@ export class GenericEventReader {
         return event->event;
     }
 
-    void reset() {
-        m_last_event_count = m_events.oldest_event_count();
-    }
+    void reset() { m_last_event_count = m_events.oldest_event_count(); }
 
   private:
     const Events& m_events;
@@ -150,9 +142,7 @@ export class GenericEventWriter {
   public:
     GenericEventWriter(Events& events) : m_events(events) {}
 
-    EventId send(refl::Value event) {
-        return m_events.send(event);
-    }
+    EventId send(refl::Value event) { return m_events.send(event); }
 
   private:
     Events& m_events;
@@ -165,9 +155,7 @@ class EventWriter : public GenericEventWriter {
     EventWriter(Events& events) : GenericEventWriter(events) {}
     EventWriter(const GenericEventWriter& writer) : GenericEventWriter(writer) {}
 
-    EventId send(const T& event) {
-        return GenericEventWriter::send(refl::Value(event));
-    }
+    EventId send(const T& event) { return GenericEventWriter::send(refl::Value(event)); }
 };
 
 } // namespace triple::ecs

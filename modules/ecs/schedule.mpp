@@ -1,0 +1,25 @@
+module;
+#include <vector>
+
+export module triple.ecs:schedule;
+import :system;
+
+namespace triple::ecs {
+
+export class World;
+
+using ScheduleId = std::size_t;
+export class Schedule {
+  public:
+    Schedule(ScheduleId id) : m_id(id) {}
+
+    ScheduleId id() const { return m_id; }
+    void add_system(SystemId system) { m_systems.push_back(system); }
+    const std::vector<SystemId>& systems() const { return m_systems; }
+
+  private:
+    ScheduleId m_id;
+    std::vector<SystemId> m_systems;
+};
+
+} // namespace triple::ecs

@@ -39,20 +39,12 @@ export class RenderPipeline {
     RenderPipeline(const RenderPipelineDescriptor& desc) :
         m_program(desc.program), m_vertex_layout(desc.vertex_layout), m_render_primitive(desc.render_primitive) {}
 
-    Program* program() const {
-        return m_program;
-    }
-    void set_program(Program* p) {
-        m_program = p;
-    }
+    Program* program() const { return m_program; }
+    void set_program(Program* p) { m_program = p; }
 
-    const VertexLayout& vertex_layout() const {
-        return m_vertex_layout;
-    }
+    const VertexLayout& vertex_layout() const { return m_vertex_layout; }
 
-    RenderPrimitive render_primitive() const {
-        return m_render_primitive;
-    }
+    RenderPrimitive render_primitive() const { return m_render_primitive; }
 
   private:
     Program* m_program;

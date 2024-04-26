@@ -1,4 +1,6 @@
 export module triple.math;
 export import :color;
 export import :common;
+export import :matrix;
+export import :primitives;
 export import :vector;

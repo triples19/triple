@@ -1,0 +1,10 @@
+export module triple;
+export import triple.app;
+export import triple.base;
+export import triple.core;
+export import triple.ecs;
+export import triple.graphics;
+export import triple.math;
+export import triple.refl;
+export import triple.render2d;
+export import triple.window;

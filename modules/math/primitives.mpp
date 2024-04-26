@@ -1,0 +1,11 @@
+export module triple.math:primitives;
+import :vector;
+
+namespace triple::math {
+
+export struct Rect {
+    Vector2 min;
+    Vector2 max;
+};
+
+} // namespace triple::math

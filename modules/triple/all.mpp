@@ -1,0 +1,15 @@
+export module triple.all;
+export import triple;
+
+export namespace triple {
+
+using namespace triple::app;
+using namespace triple::core;
+using namespace triple::ecs;
+using namespace triple::graphics;
+using namespace triple::math;
+using namespace triple::refl;
+using namespace triple::render2d;
+using namespace triple::window;
+
+} // namespace triple

@@ -32,13 +32,9 @@ export class Var {
         return *this;
     }
 
-    Ref ref() const {
-        return m_ref;
-    }
+    Ref ref() const { return m_ref; }
 
-    const Type& type() const {
-        return m_ref.type();
-    }
+    const Type& type() const { return m_ref.type(); }
 
     template<typename T>
     const T& value() const {

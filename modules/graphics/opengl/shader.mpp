@@ -19,9 +19,7 @@ export class ShaderOpenGL : public graphics::Shader {
         }
     }
 
-    GLuint handler() const {
-        return m_shader;
-    }
+    GLuint handler() const { return m_shader; }
 
   protected:
     virtual bool compile_internal(ShaderStage stage, const char** src, size_t size) {

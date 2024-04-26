@@ -1,0 +1,59 @@
+module;
+#include <glad/glad.h>
+
+#include <memory>
+
+export module triple.graphics.opengl:device;
+import triple.graphics;
+import triple.base;
+import triple.refl;
+import :utils;
+import :shader;
+import :texture2d;
+import :framebuffer;
+import :render_pipeline;
+import :program;
+import :draw_list;
+import :buffer;
+
+namespace triple::graphics::opengl {
+
+export class RenderDeviceOpenGL : public RenderDevice {
+  public:
+    RenderDeviceOpenGL() {
+        GLuint vao;
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+    }
+
+    virtual ~RenderDeviceOpenGL() = default;
+
+    virtual std::unique_ptr<Shader> create_shader() override { return std::make_unique<ShaderOpenGL>(); }
+    virtual const refl::Type& shader_type() { return refl::type<ShaderOpenGL>(); }
+
+    virtual std::unique_ptr<Program> create_program() override { return std::make_unique<ProgramOpenGL>(); }
+    virtual const refl::Type& program_type() override { return refl::type<ProgramOpenGL>(); }
+
+    virtual std::unique_ptr<Buffer> create_buffer(size_t size, BufferType type, BufferUsage usage) override {
+        return std::make_unique<BufferOpenGL>(size, type, usage);
+    }
+    virtual const refl::Type& buffer_type() override { return refl::type<BufferOpenGL>(); }
+
+    virtual std::unique_ptr<Texture2D> create_texture2d() override { return std::make_unique<Texture2DOpenGL>(); }
+    virtual const refl::Type& texture2d_type() override { return refl::type<Texture2DOpenGL>(); }
+
+    virtual std::unique_ptr<DrawList> create_draw_list() override { return std::make_unique<DrawListOpenGL>(); }
+    virtual const refl::Type& draw_list_type() override { return refl::type<DrawListOpenGL>(); }
+
+    virtual std::unique_ptr<RenderPipeline> create_render_pipeline(const RenderPipelineDescriptor& desc) override {
+        return std::make_unique<RenderPipelineOpenGL>(desc);
+    }
+    virtual const refl::Type& render_pipeline_type() override { return refl::type<RenderPipelineOpenGL>(); }
+
+    virtual std::unique_ptr<Framebuffer> create_framebuffer(const FramebufferDescriptor& desc) override {
+        return std::make_unique<FramebufferOpenGL>(desc);
+    }
+    virtual const refl::Type& frame_buffer_type() override { return refl::type<FramebufferOpenGL>(); }
+};
+
+} // namespace triple::graphics::opengl

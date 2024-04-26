@@ -91,4 +91,4 @@ export enum class FrontFace : u32 {
     CounterClockwise,
 };
 
-}
+} // namespace triple::graphics

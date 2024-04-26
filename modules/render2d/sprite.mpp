@@ -1,0 +1,8 @@
+export module triple.render2d:sprite;
+import triple.math;
+
+namespace triple::render2d {
+
+export struct Sprite {};
+
+} // namespace triple::render2d

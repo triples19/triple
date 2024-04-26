@@ -35,9 +35,7 @@ export class DrawListOpenGL : public DrawList {
         opengl_check_error();
     }
 
-    virtual void set_viewport(i32 x, i32 y, u32 w, u32 h) {
-        glViewport(x, y, w, h);
-    }
+    virtual void set_viewport(i32 x, i32 y, u32 w, u32 h) { glViewport(x, y, w, h); }
 
     virtual void bind_render_pipeline(const RenderPipeline* pipeline) {
         m_pipeline = static_cast<const RenderPipelineOpenGL*>(pipeline);

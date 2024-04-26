@@ -64,9 +64,7 @@ export class GenericQuery {
         m_hash = TypeVectorHasher {}(m_components);
     }
 
-    std::size_t hash() const {
-        return m_hash;
-    }
+    std::size_t hash() const { return m_hash; }
 
     bool matches(Archetype* archetype) {
         if (archetype->m_components.size() == 0)
@@ -85,17 +83,11 @@ export class GenericQuery {
         }
     }
 
-    const std::vector<Archetype*>& matched() const {
-        return m_matched;
-    }
+    const std::vector<Archetype*>& matched() const { return m_matched; }
 
-    const ComponentVector& components() const {
-        return m_components;
-    }
+    const ComponentVector& components() const { return m_components; }
 
-    Iterator iter() {
-        return Iterator(this, 0, 0);
-    }
+    Iterator iter() { return Iterator(this, 0, 0); }
 
   private:
     ComponentVector m_components;
@@ -108,13 +100,9 @@ class Query : public GenericQuery {
   public:
     Query(const GenericQuery& q) : GenericQuery(q) {}
 
-    static size_t hash() {
-        return TypeVectorHasher {}({&refl::type<Args>()...});
-    }
+    static size_t hash() { return TypeVectorHasher {}({&refl::type<Args>()...}); }
 
-    static ComponentVector components() {
-        return {&refl::type<Args>()...};
-    }
+    static ComponentVector components() { return {&refl::type<Args>()...}; }
 };
 
 } // namespace triple::ecs
@@ -122,8 +110,6 @@ class Query : public GenericQuery {
 namespace std {
 template<>
 struct hash<triple::ecs::GenericQuery> {
-    std::size_t operator()(const triple::ecs::GenericQuery& query) const {
-        return query.hash();
-    }
+    std::size_t operator()(const triple::ecs::GenericQuery& query) const { return query.hash(); }
 };
 } // namespace std

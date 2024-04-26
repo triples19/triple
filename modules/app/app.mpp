@@ -1,14 +1,88 @@
+module;
+#include <cstdint>
+
 export module triple.app:app;
 import triple.refl;
+import triple.ecs;
+import :plugin;
 
 namespace triple::app {
 
+export enum MainSchedules : std::uint32_t {
+    StartUp,
+    PreUpdate,
+    Update,
+    PostUpdate,
+};
+
+export struct AppStates {
+    bool should_stop {false};
+};
+
 export class App {
   public:
-    App& add_event(const refl::Type* evt_type) {
+    App() {
+        m_world.add_schedule(StartUp);
+        m_world.add_schedule(PreUpdate);
+        m_world.add_schedule(Update);
+        m_world.add_schedule(PostUpdate);
 
+        add_resource<AppStates>();
+    }
+
+    App& add_event(const refl::Type& evt_type) {
+        m_world.add_event(evt_type);
         return *this;
     }
+
+    template<class E>
+    App& add_event() {
+        return add_event(refl::type<E>());
+    }
+
+    template<class F>
+    App& add_system(MainSchedules schedule, F system) {
+        m_world.add_system(schedule, system);
+        return *this;
+    }
+
+    template<class R>
+    App& add_resource() {
+        m_world.add_resource<R>();
+        return *this;
+    }
+
+    template<class R>
+    App& add_resource(const R& resource) {
+        m_world.add_resource<R>();
+        *m_world.get_resource<R>() = resource;
+        return *this;
+    }
+
+    template<class P>
+    App& add_plugin() {
+        P plugin;
+        plugin.setup(*this);
+        return *this;
+    }
+
+    void run_schedule(MainSchedules schedule) { m_world.run_schedule(schedule); }
+
+    void run() {
+        run_schedule(StartUp);
+        bool should_stop = false;
+        while (!should_stop) {
+            run_schedule(PreUpdate);
+            run_schedule(Update);
+            run_schedule(PostUpdate);
+
+            auto app_states = m_world.get_resource<AppStates>();
+            should_stop = app_states->should_stop;
+        }
+    }
+
+  private:
+    ecs::World m_world;
 };
 
 } // namespace triple::app

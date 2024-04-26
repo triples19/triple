@@ -15,22 +15,16 @@ export class Type {
   public:
     explicit Type() : m_id(0), m_name("") {}
     explicit Type(const char* name, std::size_t size) : m_id(s_type_index++), m_name(name), m_size(size) {}
-    explicit Type(const char* name, const Type& base, std::size_t size) : Type(name, size) {
-        m_base = &base;
-    }
+    explicit Type(const char* name, const Type& base, std::size_t size) : Type(name, size) { m_base = &base; }
     ~Type() {}
 
     Type(Type&) = delete;
     Type& operator=(const Type&) = delete;
     Type(Type&&) = delete;
 
-    friend bool operator==(const Type& lhs, const Type& rhs) {
-        return lhs.id() == rhs.id();
-    }
+    friend bool operator==(const Type& lhs, const Type& rhs) { return lhs.id() == rhs.id(); }
 
-    friend bool operator<(const Type& lhs, const Type& rhs) {
-        return lhs.id() < rhs.id();
-    }
+    friend bool operator<(const Type& lhs, const Type& rhs) { return lhs.id() < rhs.id(); }
 
     bool is(const Type& type) const {
         if (type == *this)
@@ -51,17 +45,11 @@ export class Type {
         return ty;
     }
 
-    const char* name() const {
-        return m_name;
-    }
+    const char* name() const { return m_name; }
 
-    std::size_t size() const {
-        return m_size;
-    }
+    std::size_t size() const { return m_size; }
 
-    TypeId id() const {
-        return m_id;
-    }
+    TypeId id() const { return m_id; }
 
   private:
     Type(int) : m_id(1), m_name("Type") {}

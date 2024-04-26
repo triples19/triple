@@ -2,9 +2,6 @@ module;
 #include <string>
 
 module triple.ecs;
-import :system;
-import :world;
-import :event;
 
 namespace triple::ecs {
 
@@ -46,6 +43,10 @@ GenericEventWriter& SystemCommands::event_writer(const refl::Type& event_type) {
 
 GenericResource& SystemCommands::resource(const refl::Type& resource_type) {
     return m_system.m_resources.at(resource_type.id());
+}
+
+Commands SystemCommands::commands() {
+    return Commands {m_system.m_world};
 }
 
 } // namespace triple::ecs

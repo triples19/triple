@@ -1,18 +1,37 @@
 export module triple.ecs:commands;
 import triple.refl;
 import triple.base;
+import :entity;
 
 namespace triple::ecs {
 
-class World;
-class Entity;
+export class World;
+
+export class EntityCommands {
+  public:
+    EntityCommands(World& world, Entity entity);
+
+    EntityCommands& add(refl::Ref component);
+    EntityCommands& remove(const refl::Type& component_type);
+    void despawn();
+    Entity id();
+
+    template<class C>
+    EntityCommands& remove() {
+        return remove(refl::type<C>());
+    }
+
+  private:
+    World& m_world;
+    Entity m_entity;
+};
 
 export class Commands {
   public:
     Commands(World& world);
 
-    Entity spawn_entity();
-    
+    EntityCommands spawn();
+    EntityCommands entity(Entity id);
 
   private:
     World& m_world;

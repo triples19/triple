@@ -1,7 +1,9 @@
+module;
+#include <algorithm>
+#include <cmath>
+
 export module triple.math:vector;
 import :common;
-
-import std;
 
 export namespace triple::math {
 
@@ -29,12 +31,8 @@ class Vector2 {
 
     explicit operator Vector3() const;
 
-    float* data() {
-        return &x;
-    }
-    const float* data() const {
-        return &x;
-    }
+    float* data() { return &x; }
+    const float* data() const { return &x; }
 
     void set(float new_x, float new_y) {
         x = new_x;
@@ -50,33 +48,19 @@ class Vector2 {
         return (i == 0 ? x : y);
     }
 
-    bool operator==(const Vector2& rhs) const {
-        return x == rhs.x && y == rhs.y;
-    }
-    bool operator!=(const Vector2& rhs) const {
-        return x != rhs.x || y != rhs.y;
-    }
+    bool operator==(const Vector2& rhs) const { return x == rhs.x && y == rhs.y; }
+    bool operator!=(const Vector2& rhs) const { return x != rhs.x || y != rhs.y; }
 
-    Vector2 operator+(const Vector2& rhs) const {
-        return {x + rhs.x, y + rhs.y};
-    }
-    Vector2 operator-(const Vector2& rhs) const {
-        return {x - rhs.x, y - rhs.y};
-    }
-    Vector2 operator*(float scalar) const {
-        return {x * scalar, y * scalar};
-    }
-    Vector2 operator*(const Vector2& rhs) const {
-        return {x * rhs.x, y * rhs.y};
-    }
+    Vector2 operator+(const Vector2& rhs) const { return {x + rhs.x, y + rhs.y}; }
+    Vector2 operator-(const Vector2& rhs) const { return {x - rhs.x, y - rhs.y}; }
+    Vector2 operator*(float scalar) const { return {x * scalar, y * scalar}; }
+    Vector2 operator*(const Vector2& rhs) const { return {x * rhs.x, y * rhs.y}; }
     Vector2 operator/(float scalar) const {
         // ES_ASSERT_MSG(scalar != 0.0f, "divided by zero!");
         float inv = 1.0f / scalar;
         return {x * inv, y * inv};
     }
-    Vector2 operator/(const Vector2& rhs) const {
-        return {x / rhs.x, y / rhs.y};
-    }
+    Vector2 operator/(const Vector2& rhs) const { return {x / rhs.x, y / rhs.y}; }
 
     Vector2& operator+=(const Vector2& rhs) {
         x += rhs.x;
@@ -110,16 +94,10 @@ class Vector2 {
         y /= rhs.y;
         return *this;
     }
-    friend Vector2 operator*(float scalar, const Vector2& rhs) {
-        return {scalar * rhs.x, scalar * rhs.y};
-    }
+    friend Vector2 operator*(float scalar, const Vector2& rhs) { return {scalar * rhs.x, scalar * rhs.y}; }
 
-    float magnitude() const {
-        return std::hypot(x, y);
-    }
-    float sqr_magnitude() const {
-        return x * x + y * y;
-    }
+    float magnitude() const { return std::hypot(x, y); }
+    float sqr_magnitude() const { return x * x + y * y; }
 
     Vector2 normalized() const {
         Vector2 ret = *this;
@@ -134,24 +112,12 @@ class Vector2 {
         *this *= inv_length;
     }
 
-    static float distance(const Vector2& a, const Vector2& b) {
-        return (b - a).magnitude();
-    }
-    static float sqr_distance(const Vector2& a, const Vector2& b) {
-        return (b - a).sqr_magnitude();
-    }
-    static float dot(const Vector2& a, const Vector2& b) {
-        return a.x * b.x + a.y * b.y;
-    }
-    static Vector2 lerp(const Vector2& lhs, const Vector2& rhs, float alpha) {
-        return lhs + alpha * (rhs - lhs);
-    }
-    static Vector2 perpendicular(const Vector2& in_dir) {
-        return {-in_dir.y, in_dir.x};
-    }
-    static Vector2 reflect(const Vector2& in, const Vector2& normal) {
-        return in - (2 * dot(in, normal) * normal);
-    }
+    static float distance(const Vector2& a, const Vector2& b) { return (b - a).magnitude(); }
+    static float sqr_distance(const Vector2& a, const Vector2& b) { return (b - a).sqr_magnitude(); }
+    static float dot(const Vector2& a, const Vector2& b) { return a.x * b.x + a.y * b.y; }
+    static Vector2 lerp(const Vector2& lhs, const Vector2& rhs, float alpha) { return lhs + alpha * (rhs - lhs); }
+    static Vector2 perpendicular(const Vector2& in_dir) { return {-in_dir.y, in_dir.x}; }
+    static Vector2 reflect(const Vector2& in, const Vector2& normal) { return in - (2 * dot(in, normal) * normal); }
     static Vector2 rotate(const Vector2& in, float deg) {
         float sin = ::sin(deg * DEG2RAD);
         float cos = ::cos(deg * DEG2RAD);
@@ -192,12 +158,8 @@ class Vector3 {
         return *(&x + i);
     }
 
-    float* data() {
-        return &x;
-    }
-    const float* data() const {
-        return &x;
-    }
+    float* data() { return &x; }
+    const float* data() const { return &x; }
 
     void set(float new_x, float new_y, float new_z) {
         x = new_x;
@@ -205,25 +167,13 @@ class Vector3 {
         z = new_z;
     }
 
-    bool operator==(const Vector3& rhs) const {
-        return (x == rhs.x && y == rhs.y && z == rhs.z);
-    }
-    bool operator!=(const Vector3& rhs) const {
-        return x != rhs.x || y != rhs.y || z != rhs.z;
-    }
+    bool operator==(const Vector3& rhs) const { return (x == rhs.x && y == rhs.y && z == rhs.z); }
+    bool operator!=(const Vector3& rhs) const { return x != rhs.x || y != rhs.y || z != rhs.z; }
 
-    Vector3 operator+(const Vector3& rhs) const {
-        return {x + rhs.x, y + rhs.y, z + rhs.z};
-    }
-    Vector3 operator-(const Vector3& rhs) const {
-        return {x - rhs.x, y - rhs.y, z - rhs.z};
-    }
-    Vector3 operator*(float scalar) const {
-        return {x * scalar, y * scalar, z * scalar};
-    }
-    Vector3 operator*(const Vector3& rhs) const {
-        return {x * rhs.x, y * rhs.y, z * rhs.z};
-    }
+    Vector3 operator+(const Vector3& rhs) const { return {x + rhs.x, y + rhs.y, z + rhs.z}; }
+    Vector3 operator-(const Vector3& rhs) const { return {x - rhs.x, y - rhs.y, z - rhs.z}; }
+    Vector3 operator*(float scalar) const { return {x * scalar, y * scalar, z * scalar}; }
+    Vector3 operator*(const Vector3& rhs) const { return {x * rhs.x, y * rhs.y, z * rhs.z}; }
     Vector3 operator/(float scalar) const {
         // ES_ASSERT_MSG(scalar != 0.0f, "divided by zero!");
         return {x / scalar, y / scalar, z / scalar};
@@ -232,12 +182,8 @@ class Vector3 {
         // ES_ASSERT_MSG((rhs.x != 0 && rhs.y != 0 && rhs.z != 0), "divided by zero!");
         return {x / rhs.x, y / rhs.y, z / rhs.z};
     }
-    const Vector3& operator+() const {
-        return *this;
-    }
-    Vector3 operator-() const {
-        return {-x, -y, -z};
-    }
+    const Vector3& operator+() const { return *this; }
+    Vector3 operator-() const { return {-x, -y, -z}; }
     friend Vector3 operator*(float scalar, const Vector3& rhs) {
         return {scalar * rhs.x, scalar * rhs.y, scalar * rhs.z};
     }
@@ -281,12 +227,8 @@ class Vector3 {
         return *this;
     }
 
-    float magnitude() const {
-        return std::hypot(x, y, z);
-    }
-    float sqr_magnitude() const {
-        return x * x + y * y + z * z;
-    }
+    float magnitude() const { return std::hypot(x, y, z); }
+    float sqr_magnitude() const { return x * x + y * y + z * z; }
     Vector3 normalized() const {
         Vector3 ret = *this;
         ret.normalize();
@@ -300,15 +242,9 @@ class Vector3 {
         *this *= inv_length;
     }
 
-    static float distance(const Vector3& a, const Vector3& b) {
-        return (b - a).magnitude();
-    }
-    static float sqr_distance(const Vector3& a, const Vector3& b) {
-        return (b - a).sqr_magnitude();
-    }
-    static float dot(const Vector3& a, const Vector3& b) {
-        return a.x * b.x + a.y * b.y + a.z * b.z;
-    }
+    static float distance(const Vector3& a, const Vector3& b) { return (b - a).magnitude(); }
+    static float sqr_distance(const Vector3& a, const Vector3& b) { return (b - a).sqr_magnitude(); }
+    static float dot(const Vector3& a, const Vector3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
     static Vector3 cross(const Vector3& a, const Vector3& b) {
         return {a.y * b.z - a.z * b.y, a.z * b.x - a.x * b.z, a.x * b.y - a.y * b.x};
     }
@@ -317,21 +253,15 @@ class Vector3 {
         if (len_product < 1e-6f)
             len_product = 1e-6f;
         float f = dot(from, to) / len_product;
-        f       = math::clamp(f, -1.0f, 1.0f);
+        f = math::clamp(f, -1.0f, 1.0f);
         return acos(f);
     }
-    static Vector3 lerp(const Vector3& lhs, const Vector3& rhs, float alpha) {
-        return lhs + alpha * (rhs - lhs);
-    }
-    static Vector3 reflect(const Vector3& in, const Vector3& normal) {
-        return in - (2 * dot(in, normal) * normal);
-    }
+    static Vector3 lerp(const Vector3& lhs, const Vector3& rhs, float alpha) { return lhs + alpha * (rhs - lhs); }
+    static Vector3 reflect(const Vector3& in, const Vector3& normal) { return in - (2 * dot(in, normal) * normal); }
     static Vector3 clamp(const Vector3& v, const Vector3& min, const Vector3& max) {
         return {math::clamp(v.x, min.x, max.x), math::clamp(v.y, min.y, max.y), math::clamp(v.z, min.z, max.z)};
     }
-    static Vector3 project(const Vector3& v, const Vector3& normal) {
-        return v - dot(v, normal) * normal;
-    }
+    static Vector3 project(const Vector3& v, const Vector3& normal) { return v - dot(v, normal) * normal; }
 };
 
 class Vector4 {
@@ -360,12 +290,8 @@ class Vector4 {
         return *(&x + i);
     }
 
-    float* data() {
-        return &x;
-    }
-    const float* data() const {
-        return &x;
-    }
+    float* data() { return &x; }
+    const float* data() const { return &x; }
 
     void set(float new_x, float new_y, float new_z, float new_w) {
         x = new_x;
@@ -374,26 +300,14 @@ class Vector4 {
         w = new_w;
     }
 
-    bool operator==(const Vector4& rhs) const {
-        return (x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w);
-    }
+    bool operator==(const Vector4& rhs) const { return (x == rhs.x && y == rhs.y && z == rhs.z && w == rhs.w); }
 
-    bool operator!=(const Vector4& rhs) const {
-        return !(rhs == *this);
-    }
+    bool operator!=(const Vector4& rhs) const { return !(rhs == *this); }
 
-    Vector4 operator+(const Vector4& rhs) const {
-        return Vector4(x + rhs.x, y + rhs.y, z + rhs.z, w + rhs.w);
-    }
-    Vector4 operator-(const Vector4& rhs) const {
-        return Vector4(x - rhs.x, y - rhs.y, z - rhs.z, w - rhs.w);
-    }
-    Vector4 operator*(float scalar) const {
-        return Vector4(x * scalar, y * scalar, z * scalar, w * scalar);
-    }
-    Vector4 operator*(const Vector4& rhs) const {
-        return Vector4(rhs.x * x, rhs.y * y, rhs.z * z, rhs.w * w);
-    }
+    Vector4 operator+(const Vector4& rhs) const { return Vector4(x + rhs.x, y + rhs.y, z + rhs.z, w + rhs.w); }
+    Vector4 operator-(const Vector4& rhs) const { return Vector4(x - rhs.x, y - rhs.y, z - rhs.z, w - rhs.w); }
+    Vector4 operator*(float scalar) const { return Vector4(x * scalar, y * scalar, z * scalar, w * scalar); }
+    Vector4 operator*(const Vector4& rhs) const { return Vector4(rhs.x * x, rhs.y * y, rhs.z * z, rhs.w * w); }
     Vector4 operator/(float scalar) const {
         // ES_ASSERT_MSG(scalar != 0.0, "divided by zero!");
         return Vector4(x / scalar, y / scalar, z / scalar, w / scalar);
@@ -403,13 +317,9 @@ class Vector4 {
         return Vector4(x / rhs.x, y / rhs.y, z / rhs.z, w / rhs.w);
     }
 
-    const Vector4& operator+() const {
-        return *this;
-    }
+    const Vector4& operator+() const { return *this; }
 
-    Vector4 operator-() const {
-        return Vector4(-x, -y, -z, -w);
-    }
+    Vector4 operator-() const { return Vector4(-x, -y, -z, -w); }
 
     friend Vector4 operator*(float scalar, const Vector4& rhs) {
         return Vector4(scalar * rhs.x, scalar * rhs.y, scalar * rhs.z, scalar * rhs.w);
@@ -479,9 +389,7 @@ class Vector4 {
         return *this;
     }
 
-    static float dot(const Vector4& a, const Vector4& b) {
-        return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
-    }
+    static float dot(const Vector4& a, const Vector4& b) { return a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w; }
 };
 
 const Vector2 Vector2::Down {0, -1};

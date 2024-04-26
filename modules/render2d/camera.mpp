@@ -1,0 +1,13 @@
+export module triple.render2d:camera;
+import triple.math;
+
+namespace triple::render2d {
+
+struct Camera {
+    float width, height;
+    float near, far;
+
+    inline math::Matrix4x4 projection() const { return math::orthographic(0.0f, width, 0.0f, height, near, far); }
+};
+
+} // namespace triple::render2d

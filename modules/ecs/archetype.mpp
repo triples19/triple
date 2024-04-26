@@ -6,6 +6,7 @@ module;
 
 export module triple.ecs:archetype;
 import :entity;
+import :utils;
 import triple.refl;
 
 namespace triple::ecs {
@@ -39,9 +40,7 @@ export struct Column {
         ++m_count;
     }
 
-    void* get(std::size_t row) {
-        return static_cast<char*>(m_elements) + row * m_element_size;
-    }
+    void* get(std::size_t row) { return static_cast<char*>(m_elements) + row * m_element_size; }
 
     void remove(std::size_t row) {
         std::memcpy(
@@ -67,11 +66,8 @@ export struct Archetype {
         else
             return m_columns[0].m_count;
     }
-};
 
-export struct EntityRecord {
-    Archetype* m_archetype;
-    std::size_t m_row;
+    std::size_t hash() const { return TypeVectorHasher {}(m_components); }
 };
 
 } // namespace triple::ecs

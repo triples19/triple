@@ -5,19 +5,6 @@ export module triple.ecs:entity;
 
 namespace triple::ecs {
 
-export using EntityId = std::uint32_t;
-
-class World;
-
-export class Entity {
-  public:
-    Entity(EntityId id) : m_id(id) {}
-
-    EntityId id() const { return m_id; }
-
-  private:
-    World* m_world;
-    EntityId m_id;
-};
+export using Entity = std::uint32_t;
 
 } // namespace triple::ecs

@@ -43,9 +43,7 @@ export class FramebufferOpenGL : public Framebuffer {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    GLuint handler() const {
-        return m_fbo;
-    }
+    GLuint handler() const { return m_fbo; }
 
   private:
     GLuint m_fbo;

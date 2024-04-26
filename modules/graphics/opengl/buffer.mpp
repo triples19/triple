@@ -31,9 +31,7 @@ export class BufferOpenGL : public graphics::Buffer {
         glBindBuffer(m_type, 0);
     }
 
-    GLuint handler() const {
-        return m_buffer;
-    }
+    GLuint handler() const { return m_buffer; }
 
   private:
     GLuint m_buffer;
