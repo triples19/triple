@@ -69,9 +69,9 @@ export class WindowPlugin : public app::Plugin {
             .width = width,
             .height = height,
         });
-        app.add_system(app::PreUpdate, window_prepare);
-        // app.add_system(app::PostUpdate, swap_buffers);
-        app.add_system(app::PostUpdate, update_should_close);
+        app.add_system(app::First, window_prepare);
+        // app.add_system(app::RenderEnd, swap_buffers);
+        app.add_system(app::Last, update_should_close);
     }
 };
 

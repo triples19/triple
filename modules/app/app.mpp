@@ -10,11 +10,13 @@ import :plugin;
 namespace triple::app {
 
 export enum MainSchedules : std::uint32_t {
+    First,
     PreStartUp,
     StartUp,
     PreUpdate,
     Update,
     PostUpdate,
+    Last,
 
     RenderStart,
     RenderUpdate,
@@ -28,11 +30,13 @@ export struct AppStates {
 export class App {
   public:
     App() {
+        m_world.add_schedule(First);
         m_world.add_schedule(PreStartUp);
         m_world.add_schedule(StartUp);
         m_world.add_schedule(PreUpdate);
         m_world.add_schedule(Update);
         m_world.add_schedule(PostUpdate);
+        m_world.add_schedule(Last);
 
         m_world.add_schedule(RenderStart);
         m_world.add_schedule(RenderUpdate);
@@ -89,9 +93,11 @@ export class App {
         run_schedule(StartUp);
         bool should_stop = false;
         while (!should_stop) {
+            run_schedule(First);
             run_schedule(PreUpdate);
             run_schedule(Update);
             run_schedule(PostUpdate);
+            run_schedule(Last);
 
             run_schedule(RenderStart);
             run_schedule(RenderUpdate);

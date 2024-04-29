@@ -1,18 +1,9 @@
-#include <filesystem>
-
-import triple.all;
-
-using namespace triple;
+#include "common.hpp"
 
 int main() {
     App app;
-    app.add_plugin<AssetPlugin>();
-    AssetServer& asset_server = app.get_resource<AssetServer>().get();
-    auto assets_dir =
-        std::filesystem::current_path().parent_path().parent_path() /
-        "samples" / "assets";
-    asset_server.set_assets_dir(assets_dir);
-    app.add_plugin<WindowPlugin>()
+    app.add_plugin<SamplesPlugin>()
+        .add_plugin<WindowPlugin>()
         .add_plugin<OpenGLPlugin>()
         .add_plugin<GraphicsPlugin>()
         .add_plugin<RenderPlugin>()

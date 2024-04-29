@@ -9,3 +9,5 @@ end
 add_sample("helloworld")
 add_sample("assets")
 add_sample("sprite")
+add_sample("input")
+add_sample("sprite_move")

@@ -128,10 +128,14 @@ export class World {
     void remove_component(Entity entity, const refl::Type& component) {
         EntityRecord& record = m_entity_index[entity];
         Archetype* archetype = record.m_archetype;
-        Archetype*& next_archetype = archetype->m_edges[component.id()].m_remove;
+        Archetype*& next_archetype =
+            archetype->m_edges[component.id()].m_remove;
         if (next_archetype == nullptr) {
             ComponentVector components = archetype->m_components;
-            components.erase(std::remove(components.begin(), components.end(), &component), components.end());
+            components.erase(
+                std::remove(components.begin(), components.end(), &component),
+                components.end()
+            );
             next_archetype = create_archetype(components);
         }
         move_entity(archetype, entity, next_archetype);
@@ -149,7 +153,8 @@ export class World {
         if (iter == archetype->m_components.end()) {
             return nullptr;
         }
-        auto& column = archetype->m_columns[iter - archetype->m_components.begin()];
+        auto& column =
+            archetype->m_columns[iter - archetype->m_components.begin()];
         return refl::Ref {column.get(record.m_row), component_type};
     }
 
@@ -189,7 +194,8 @@ export class World {
         return get_events(refl::type<E>());
     }
 
-    // void add_resource(const refl::Type& resource) { m_resources[resource.type().id()] = resource; }
+    // void add_resource(const refl::Type& resource) {
+    // m_resources[resource.type().id()] = resource; }
 
     template<class R>
     void add_resource() {
@@ -200,7 +206,9 @@ export class World {
     }
 
     GenericResource get_resource(const refl::Type& resource_type) {
-        assert(m_resources.find(resource_type.id()) != m_resources.end());
+        if (m_resources.find(resource_type.id()) == m_resources.end()) {
+            log::error("Resource not found: {}", resource_type.name());
+        }
         return GenericResource {m_resources[resource_type.id()].ref()};
     }
 
@@ -209,7 +217,9 @@ export class World {
         return get_resource(refl::type<R>());
     }
 
-    void add_schedule(ScheduleId id) { m_schedules[id] = std::make_unique<Schedule>(id); }
+    void add_schedule(ScheduleId id) {
+        m_schedules[id] = std::make_unique<Schedule>(id);
+    }
 
     Schedule& get_schedule(ScheduleId id) {
         assert(m_schedules.find(id) != m_schedules.end());
@@ -249,7 +259,9 @@ export class World {
         // init columns
         archetype->m_columns.reserve(archetype->m_components.size());
         for (std::size_t i = 0; i < archetype->m_components.size(); ++i) {
-            archetype->m_columns.push_back(Column {archetype->m_components[i]->size()});
+            archetype->m_columns.push_back(
+                Column {archetype->m_components[i]->size()}
+            );
         }
 
         // add to map
@@ -300,9 +312,9 @@ export class World {
     std::vector<Archetype*> m_archetypes;
     Archetype* m_root_archetype;
 
-    // NOTE: Strange compiler internal error happening here if I use std::unordered_map
-    // So I'm using std::map instead for now
-    // "fatal error C1001: Internal compiler error. (compiler file 'msc1.cpp', line 1587)"
+    // NOTE: Strange compiler internal error happening here if I use
+    // std::unordered_map So I'm using std::map instead for now "fatal error
+    // C1001: Internal compiler error. (compiler file 'msc1.cpp', line 1587)"
 
     std::map<std::size_t, EntityRecord> m_entity_index;
     std::map<std::size_t, Archetype*> m_archetype_map;

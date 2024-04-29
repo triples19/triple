@@ -1,2 +1,3 @@
 export module triple.window;
+export import :input;
 export import :window;

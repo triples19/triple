@@ -67,6 +67,7 @@ void render_end(Resource<RenderResource> render_res, Resource<Window> win_res) {
     auto device = render_res->device;
     auto draw_list = render_res->draw_list;
     draw_list->end();
+    // NOTE: temporary solution, move it to window system
     glfwSwapBuffers(win_res->glfw_window);
 }
 

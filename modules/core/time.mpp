@@ -1,11 +1,46 @@
+module;
+#include "refl_macros.hpp"
+#include <chrono>
+
 export module triple.core:time;
 import triple.app;
+import triple.ecs;
 
 namespace triple::core {
 
-export class TimePlugin : public app::Plugin {
-  public:
-    void setup(app::App& app) {}
+export struct Time {
+    void tick() {
+        auto now = std::chrono::steady_clock::now();
+        m_delta_time = std::chrono::duration_cast<std::chrono::duration<float>>(
+                           now - m_last_tick_time
+        )
+                           .count();
+        m_last_tick_time = now;
+    }
+
+    float delta() const { return m_delta_time; }
+
+  private:
+    std::chrono::steady_clock::time_point m_last_tick_time {
+        std::chrono::steady_clock::now()
+    };
+    float m_delta_time = 0.0f;
 };
 
+void time_system(ecs::Resource<Time> time) {
+    time->tick();
+}
+
+} // namespace triple::core
+
+REFL(triple::core::Time)
+
+namespace triple::core {
+export class TimePlugin : public app::Plugin {
+  public:
+    void setup(app::App& app) {
+        app.add_resource<Time>();
+        app.add_system(app::First, time_system);
+    }
+};
 } // namespace triple::core

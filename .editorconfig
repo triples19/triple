@@ -7,7 +7,7 @@ insert_final_newline = true
 charset = utf-8
 indent_style = space
 
-[*.{cpp,hpp,py}]
+[*.{cpp,hpp,mpp,lua}]
 indent_size = 4
 
 [*.yaml]

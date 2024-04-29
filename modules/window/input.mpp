@@ -1,0 +1,107 @@
+module;
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <map>
+
+#include "refl_macros.hpp"
+
+export module triple.window:input;
+import triple.ecs;
+import triple.app;
+import triple.refl;
+import :window;
+
+namespace triple::window {
+
+export enum class KeyCode : int32_t {
+#define KEY_CODE(name, code) name = code,
+#include "KeyCode.def"
+#undef KEY_CODE
+};
+
+export constexpr KeyCode c_key_codes[] = {
+#define KEY_CODE(name, code) KeyCode::name,
+#include "KeyCode.def"
+#undef KEY_CODE
+};
+
+export constexpr const char* key_code_to_string(KeyCode keyCode) noexcept {
+    switch (keyCode) {
+#define KEY_CODE(name, code) \
+    case KeyCode::name:      \
+        return #name;
+#include "KeyCode.def"
+#undef KEY_CODE
+    }
+    return "Unknown";
+}
+
+export enum class KeyState : int32_t {
+    Pressed,
+    Released,
+};
+
+export struct KeyEvent {
+    KeyCode key_code;
+    KeyState state;
+};
+
+export struct KeyInput {
+    inline bool pressed(KeyCode key) const {
+        return keys.at(key).down_this_frame;
+    }
+    inline bool just_pressed(KeyCode key) const {
+        return keys.at(key).down_this_frame && !keys.at(key).down_last_frame;
+    }
+    inline bool just_released(KeyCode key) const {
+        return !keys.at(key).down_this_frame && keys.at(key).down_last_frame;
+    }
+
+    inline void press(KeyCode key) { keys[key].down_this_frame = true; }
+    inline void release(KeyCode key) { keys[key].down_this_frame = false; }
+    inline void clear() {
+        for (auto& [key, state] : keys) {
+            state.down_last_frame = state.down_this_frame;
+            state.down_this_frame = false;
+        }
+    }
+
+  private:
+    struct KeyStateInternal {
+        bool down_this_frame {false};
+        bool down_last_frame {false};
+    };
+    std::map<KeyCode, KeyStateInternal> keys;
+};
+
+} // namespace triple::window
+REFL(triple::window::KeyEvent)
+REFL(triple::window::KeyInput)
+
+namespace triple::window {
+
+void key_input_system(
+    ecs::Resource<Window> win_res,
+    ecs::Resource<KeyInput> input
+) {
+    auto win = win_res->glfw_window;
+    input->clear();
+    for (KeyCode key_code : c_key_codes) {
+        int state = glfwGetKey(win, static_cast<int>(key_code));
+        if (state == GLFW_PRESS) {
+            input->press(key_code);
+        } else if (state == GLFW_RELEASE) {
+            input->release(key_code);
+        }
+    }
+}
+
+export class InputPlugin : public app::Plugin {
+  public:
+    void setup(app::App& app) {
+        app.add_resource<KeyInput>();
+        app.add_system(app::PreUpdate, key_input_system);
+    }
+};
+
+} // namespace triple::window
