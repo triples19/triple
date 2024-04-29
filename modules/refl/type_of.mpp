@@ -1,13 +1,19 @@
 module;
 #include <type_traits>
+#include <typeinfo>
 
 export module triple.refl:type_of;
+import triple.base;
 import :type;
 
 namespace triple::refl {
 
 export template<class T>
 const Type& type() {
+#ifdef _MSC_VER
+    using ::type_info;
+#endif
+    log::error("type<T>() not defined for {}", typeid(T).name());
     static Type ty("INVALID", 0);
     return ty;
 }

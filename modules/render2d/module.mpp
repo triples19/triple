@@ -1,4 +1,5 @@
 export module triple.render2d;
 export import :camera;
 export import :material2d;
+export import :render;
 export import :sprite;

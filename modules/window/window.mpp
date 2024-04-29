@@ -2,19 +2,24 @@ module;
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include <stdexcept>
+#include "refl_macros.hpp"
 
-export module triple.window;
+#include <stdexcept>
+#include <string>
+
+export module triple.window:window;
 import triple.app;
 import triple.ecs;
+import triple.refl;
 
 namespace triple::window {
 
 export struct Window {
     GLFWwindow* glfw_window;
+    int width, height;
 };
 
-GLFWwindow* setup_glfw() {
+GLFWwindow* setup_glfw(int width, int height, const std::string& title) {
     if (!glfwInit()) {
         throw std::runtime_error("Failed to initialize GLFW");
     }
@@ -23,7 +28,8 @@ GLFWwindow* setup_glfw() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    GLFWwindow* win = glfwCreateWindow(1280, 720, "Triple", nullptr, nullptr);
+    GLFWwindow* win =
+        glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
     if (!win) {
         throw std::runtime_error("Failed to create window");
     }
@@ -37,26 +43,38 @@ GLFWwindow* setup_glfw() {
     return win;
 }
 
-void poll_events() {
+void window_prepare(ecs::Resource<Window> win_res) {
     glfwPollEvents();
+    Window& win = *win_res;
+    glfwGetFramebufferSize(win.glfw_window, &win.width, &win.height);
 }
 
 void swap_buffers(ecs::Resource<Window> win) {
     glfwSwapBuffers(win->glfw_window);
 }
 
-void update_should_close(ecs::Resource<Window> win, ecs::Resource<app::AppStates> app_states) {
+void update_should_close(
+    ecs::Resource<Window> win,
+    ecs::Resource<app::AppStates> app_states
+) {
     app_states->should_stop = glfwWindowShouldClose(win->glfw_window);
 }
 
 export class WindowPlugin : public app::Plugin {
   public:
     void setup(app::App& app) {
-        app.add_resource(Window {.glfw_window = setup_glfw()});
-        app.add_system(app::PreUpdate, poll_events);
-        app.add_system(app::PostUpdate, swap_buffers);
+        int width = 1280, height = 720;
+        app.add_resource(Window {
+            .glfw_window = setup_glfw(width, height, "Triple Engine"),
+            .width = width,
+            .height = height,
+        });
+        app.add_system(app::PreUpdate, window_prepare);
+        // app.add_system(app::PostUpdate, swap_buffers);
         app.add_system(app::PostUpdate, update_should_close);
     }
 };
 
 } // namespace triple::window
+
+REFL(triple::window::Window)

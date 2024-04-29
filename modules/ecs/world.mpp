@@ -193,6 +193,8 @@ export class World {
 
     template<class R>
     void add_resource() {
+        using RawR = std::remove_cvref_t<R>;
+        log::trace("Adding resource: {}", refl::type<R>().name());
         // m_resources[refl::type<R>().id()] = R {};
         m_resources.emplace(refl::type<R>().id(), R {});
     }

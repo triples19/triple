@@ -8,3 +8,15 @@ export import :render_pipeline;
 export import :shader;
 export import :texture2d;
 export import :utils;
+
+import triple.app;
+import triple.graphics;
+
+namespace triple::graphics {
+
+export class OpenGLPlugin : public app::Plugin {
+  public:
+    void setup(app::App& app) { RenderDevice::set_instance(new opengl::RenderDeviceOpenGL); }
+};
+
+} // namespace triple::graphics

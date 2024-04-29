@@ -1,0 +1,8 @@
+module;
+#include "refl_macros.hpp"
+
+export module triple.core:types;
+import triple.refl;
+import :transform;
+
+TYPE(triple::core::Transform2D)

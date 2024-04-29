@@ -1,3 +1,5 @@
 export module triple.app;
 export import :app;
+export import :asset;
 export import :plugin;
+export import :types;

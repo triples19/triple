@@ -33,20 +33,7 @@ export class SystemCommands {
     Commands commands();
 
     template<class T>
-    decltype(auto) get_param() {
-        using RawT = std::remove_cvref_t<T>;
-        if constexpr (is_specialization<RawT, Query>) {
-            return RawT(query(std::to_string(RawT::hash())));
-        } else if constexpr (is_specialization<RawT, EventReader>) {
-            return event_reader(refl::type<RawT::EventType>());
-        } else if constexpr (is_specialization<RawT, EventWriter>) {
-            return event_writer(refl::type<RawT::EventType>());
-        } else if constexpr (is_specialization<RawT, Resource>) {
-            return resource(refl::type<RawT::ResourceType>());
-        } else if constexpr (std::same_as<RawT, Commands>) {
-            return commands();
-        }
-    }
+    decltype(auto) get_param();
 
   private:
     System& m_system;
@@ -79,6 +66,15 @@ export class System {
     System& add_event_wrtier(const refl::Type& event_type);
     System& add_resource(const refl::Type& resource_type);
 
+    template<class R>
+    System& add_local_resource() {
+        auto& type = refl::type<R>();
+        if (m_local_resources.find(type.id()) == m_local_resources.end()) {
+            m_local_resources[type.id()] = refl::Value(R {});
+        }
+        return *this;
+    }
+
     template<class... Args>
     System& add_query(const std::string& name = "") {
         return add_query(name, {&refl::type<Args>()...});
@@ -95,6 +91,8 @@ export class System {
             add_event_wrtier(refl::type<T::EventType>());
         } else if constexpr (is_specialization<RawT, Resource>) {
             add_resource(refl::type<T::ResourceType>());
+        } else if constexpr (is_specialization<RawT, LocalResource>) {
+            add_local_resource<T::ResourceType>();
         }
         return *this;
     }
@@ -120,6 +118,25 @@ export class System {
     std::unordered_map<refl::TypeId, GenericEventReader> m_event_readers;
     std::unordered_map<refl::TypeId, GenericEventWriter> m_event_writers;
     std::unordered_map<refl::TypeId, GenericResource> m_resources;
+    std::unordered_map<refl::TypeId, refl::Value> m_local_resources;
 };
+
+template<class T>
+decltype(auto) SystemCommands::get_param() {
+    using RawT = std::remove_cvref_t<T>;
+    if constexpr (is_specialization<RawT, Query>) {
+        return RawT(query(std::to_string(RawT::hash())));
+    } else if constexpr (is_specialization<RawT, EventReader>) {
+        return event_reader(refl::type<RawT::EventType>());
+    } else if constexpr (is_specialization<RawT, EventWriter>) {
+        return event_writer(refl::type<RawT::EventType>());
+    } else if constexpr (is_specialization<RawT, Resource>) {
+        return resource(refl::type<RawT::ResourceType>());
+    } else if constexpr (is_specialization<RawT, LocalResource>) {
+        return GenericLocalResource(m_system.m_local_resources[refl::type<RawT::ResourceType>().id()].ref());
+    } else if constexpr (std::same_as<RawT, Commands>) {
+        return commands();
+    }
+}
 
 } // namespace triple::ecs

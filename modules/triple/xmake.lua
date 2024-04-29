@@ -7,6 +7,7 @@ target("triple")
         "triple_core",
         "triple_ecs",
         "triple_graphics",
+        "triple_graphics_opengl",
         "triple_math",
         "triple_refl",
         "triple_render2d",

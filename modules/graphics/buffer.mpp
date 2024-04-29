@@ -13,7 +13,7 @@ export struct Tex2F {
 
 export struct V2F_C4F_T2F {
     math::Vector2 vertices;
-    math::Color4F colors;
+    math::Color4F color;
     Tex2F tex_coords;
 };
 
@@ -26,7 +26,8 @@ export struct V2F_C4F_T2F_Quad {
 
 export class Buffer {
   public:
-    Buffer(size_t size, BufferType type, BufferUsage usage) : m_size(size), m_type(type), m_usage(usage) {}
+    Buffer(size_t size, BufferType type, BufferUsage usage) :
+        m_size(size), m_type(type), m_usage(usage) {}
     virtual ~Buffer() = default;
 
     virtual void update_data(const byte* data) = 0;

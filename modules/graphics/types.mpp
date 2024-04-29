@@ -1,0 +1,10 @@
+module;
+#include "refl_macros.hpp"
+
+export module triple.graphics:types;
+import triple.refl;
+import :texture2d;
+import :program;
+
+TYPE(triple::graphics::Texture2D)
+TYPE(triple::graphics::Program)

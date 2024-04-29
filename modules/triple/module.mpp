@@ -4,6 +4,7 @@ export import triple.base;
 export import triple.core;
 export import triple.ecs;
 export import triple.graphics;
+export import triple.graphics.opengl;
 export import triple.math;
 export import triple.refl;
 export import triple.render2d;

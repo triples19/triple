@@ -25,7 +25,8 @@ export class GenericQuery {
     class Iterator {
       public:
         Iterator(GenericQuery* q, size_t archetype_index, size_t entity_index) :
-            m_query(q), m_archetype_index(archetype_index), m_entity_index(entity_index) {}
+            m_query(q), m_archetype_index(archetype_index),
+            m_entity_index(entity_index) {}
 
         refl::Ref get(const refl::Type& type) {
             Archetype* archetype = m_query->matched()[m_archetype_index];
@@ -35,7 +36,10 @@ export class GenericQuery {
                 return nullptr;
             }
             auto index = iter - m_query->components().begin();
-            return refl::Ref {archetype->m_columns[index].get(m_entity_index), type};
+            return refl::Ref {
+                archetype->m_columns[index].get(m_entity_index),
+                type
+            };
         }
 
         template<class T>
@@ -45,10 +49,15 @@ export class GenericQuery {
 
         bool next() {
             m_entity_index++;
-            if (m_entity_index == m_query->matched()[m_archetype_index]->size()) {
+            if (m_entity_index ==
+                m_query->matched()[m_archetype_index]->size()) {
                 m_entity_index = 0;
                 m_archetype_index++;
             }
+            return m_archetype_index != m_query->matched().size();
+        }
+
+        operator bool() const {
             return m_archetype_index != m_query->matched().size();
         }
 
@@ -70,7 +79,8 @@ export class GenericQuery {
         if (archetype->m_components.size() == 0)
             return false;
         for (auto component : m_components) {
-            if (std::ranges::find(archetype->m_components, component) == archetype->m_components.end()) {
+            if (std::ranges::find(archetype->m_components, component) ==
+                archetype->m_components.end()) {
                 return false;
             }
         }
@@ -78,7 +88,8 @@ export class GenericQuery {
     }
 
     void add_if_matches(Archetype* archetype) {
-        if (matches(archetype) && std::ranges::find(m_matched, archetype) == m_matched.end()) {
+        if (matches(archetype) &&
+            std::ranges::find(m_matched, archetype) == m_matched.end()) {
             m_matched.push_back(archetype);
         }
     }
@@ -100,7 +111,9 @@ class Query : public GenericQuery {
   public:
     Query(const GenericQuery& q) : GenericQuery(q) {}
 
-    static size_t hash() { return TypeVectorHasher {}({&refl::type<Args>()...}); }
+    static size_t hash() {
+        return TypeVectorHasher {}({&refl::type<Args>()...});
+    }
 
     static ComponentVector components() { return {&refl::type<Args>()...}; }
 };
@@ -110,6 +123,8 @@ class Query : public GenericQuery {
 namespace std {
 template<>
 struct hash<triple::ecs::GenericQuery> {
-    std::size_t operator()(const triple::ecs::GenericQuery& query) const { return query.hash(); }
+    std::size_t operator()(const triple::ecs::GenericQuery& query) const {
+        return query.hash();
+    }
 };
 } // namespace std

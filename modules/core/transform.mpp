@@ -1,0 +1,17 @@
+export module triple.core:transform;
+import triple.math;
+
+namespace triple::core {
+
+export struct Transform2D {
+    math::Vector2 position {0.0f, 0.0f};
+    math::Vector2 scale {1.0f, 1.0f};
+    float rotation {0.0f};
+
+    inline math::Matrix4x4 model_matrix() const {
+        return math::translate(position.x, position.y, 0.0f) * math::rotate_z(rotation) *
+               math::scale(scale.x, scale.y, 1.0f);
+    }
+};
+
+} // namespace triple::core

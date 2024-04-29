@@ -1,0 +1,162 @@
+module;
+#include <cstdint>
+#include <filesystem>
+#include <format>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+
+export module triple.app:asset;
+import triple.base;
+import triple.refl;
+import :app;
+
+namespace triple::app {
+
+using HandleId = std::uint32_t;
+
+export class GenericHandle {
+  public:
+    GenericHandle(const refl::Type& type, HandleId id) :
+        m_type(&type), m_id(id) {}
+
+    const refl::Type& type() const { return *m_type; }
+    HandleId id() const { return m_id; }
+
+  private:
+    const refl::Type* m_type;
+    HandleId m_id;
+};
+
+export template<class T>
+class Handle : public GenericHandle {
+  public:
+    Handle(HandleId id) : GenericHandle(refl::type<T>(), id) {}
+};
+
+export class GenericAssetLoader {
+  public:
+    virtual const refl::Type& type() = 0;
+    virtual void* load(const std::filesystem::path& path) = 0;
+    virtual void unload(void*) = 0;
+};
+
+export template<class T>
+class AssetLoader : public GenericAssetLoader {
+  public:
+    virtual const refl::Type& type() { return refl::type<T>(); }
+    virtual void unload(void* asset) { delete static_cast<T*>(asset); }
+};
+
+export class GenericAssets {
+  public:
+    GenericAssets(const refl::Type& type) : m_type(&type) {}
+
+    const refl::Type& type() const { return *m_type; }
+
+    refl::Ref get(GenericHandle handle) {
+        return refl::Ref {m_assets.at(handle.id()), type()};
+    }
+
+    std::unordered_map<HandleId, void*>& assets() { return m_assets; }
+
+    GenericHandle add(void* value) {
+        HandleId id = m_next_id++;
+        m_assets[id] = value;
+        return GenericHandle(type(), id);
+    }
+
+  private:
+    const refl::Type* m_type;
+    std::unordered_map<HandleId, void*> m_assets;
+    HandleId m_next_id {0};
+};
+
+export template<class T>
+class Assets {
+  public:
+    Assets(const GenericAssets& assets) : m_assets(&assets) {}
+
+    T& get(Handle<T> handle) { return m_assets->get(handle).value<T>(); }
+
+    Handle<T> add(T* value) { return Handle<T>(m_assets->add(value).id()); }
+
+  private:
+    GenericAssets* m_assets;
+};
+
+export class AssetServer {
+  public:
+    AssetServer() = default;
+    ~AssetServer() {
+        for (auto& [type_id, record] : m_assets) {
+            for (auto& [id, asset] : record.assets->assets()) {
+                record.loader->unload(asset);
+            }
+            delete record.assets;
+            delete record.loader;
+        }
+    }
+
+    void set_assets_dir(const std::filesystem::path& path) {
+        log::trace("Setting assets directory to {}", path.string());
+        m_assets_dir = path;
+    }
+
+    template<class T>
+    Handle<T> load(const std::filesystem::path& path) {
+        auto iter = m_assets.find(refl::type<T>().id());
+        if (iter == m_assets.end()) {
+            log::fatal("No loader for type: {}", refl::type<T>().name());
+        }
+        GenericAssets* assets = iter->second.assets;
+        GenericAssetLoader* loader = iter->second.loader;
+        auto absolute_path = get_absolute_path(path);
+        return Handle<T>(assets->add(loader->load(absolute_path)).id());
+    }
+
+    GenericAssets& get_assets(refl::TypeId type) {
+        return *m_assets.at(type).assets;
+    }
+
+    template<class T, class LoaderT>
+    void add_loader() {
+        log::trace("Adding asset loader for {}", refl::type<T>().name());
+        AssetsRecord record {
+            .assets = new GenericAssets(refl::type<T>()),
+            .loader = new LoaderT,
+        };
+        m_assets[refl::type<T>().id()] = record;
+    }
+
+    template<class T>
+    T& get(Handle<T> handle) {
+        auto iter = m_assets.find(refl::type<T>().id());
+        if (iter == m_assets.end()) {
+            log::fatal("No loader for type: {}", refl::type<T>().name());
+        }
+        GenericAssets* assets = iter->second.assets;
+        return assets->get(handle).value<T>();
+    }
+
+  private:
+    std::filesystem::path get_absolute_path(const std::filesystem::path& path) {
+        return m_assets_dir / path;
+    }
+
+  private:
+    struct AssetsRecord {
+        GenericAssets* assets;
+        GenericAssetLoader* loader;
+    };
+    std::unordered_map<refl::TypeId, AssetsRecord> m_assets;
+    std::filesystem::path m_assets_dir;
+};
+
+export class AssetPlugin : public app::Plugin {
+  public:
+    void setup(app::App& app) { app.add_resource<AssetServer>(); }
+};
+
+} // namespace triple::app

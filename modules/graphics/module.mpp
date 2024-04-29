@@ -1,3 +1,9 @@
+module;
+#include <filesystem>
+#include <string>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 export module triple.graphics;
 export import :buffer;
 export import :device;
@@ -8,3 +14,70 @@ export import :program;
 export import :render_pipeline;
 export import :shader;
 export import :texture2d;
+export import :types;
+
+import triple.base;
+import triple.app;
+
+namespace triple::graphics {
+
+export class Texture2DLoader : public app::AssetLoader<Texture2D> {
+  public:
+    virtual void* load(const std::filesystem::path& path) override {
+        int width, height, nrChannels;
+        PixelFormat format;
+        auto data = stbi_load(path.string().c_str(), &width, &height, &nrChannels, 0);
+        if (!data) {
+            log::error("Failed to load image");
+            return nullptr;
+        }
+
+        if (nrChannels == 4) {
+            format = PixelFormat::RGBA8888;
+        } else {
+            format = PixelFormat::RGB888;
+        }
+
+        TextureDescriptor desc {
+            .texture_type = TextureType::Texture2D,
+            .texture_format = format,
+            .texture_usage = TextureUsage::Read,
+            .width = width,
+            .height = height,
+            .sampler_descriptor = {},
+            .data = reinterpret_cast<const byte*>(data),
+        };
+        Texture2D* texture = RenderDevice::instance()->create_texture2d(desc);
+
+        stbi_image_free(data);
+        return texture;
+    }
+};
+
+export class ProgramLoader : public app::AssetLoader<Program> {
+  public:
+    virtual void* load(const std::filesystem::path& path) override {
+        auto device = RenderDevice::instance();
+        auto src = read_file_str(path.string());
+        auto vertex_shader = device->create_shader();
+        if (!vertex_shader->compile(ShaderStage::Vertex, {"#version 330 core\n", "#define VERTEX\n", src})) {
+            return nullptr;
+        }
+        auto fragment_shader = device->create_shader();
+        if (!fragment_shader->compile(ShaderStage::Fragment, {"#version 330 core\n", "#define FRAGMENT\n", src})) {
+            return nullptr;
+        }
+
+        return device->create_program(*vertex_shader, *fragment_shader);
+    }
+};
+
+export class GraphicsPlugin : public app::Plugin {
+  public:
+    void setup(app::App& app) {
+        auto asset_server = app.get_resource<app::AssetServer>();
+        asset_server->add_loader<Program, ProgramLoader>();
+        asset_server->add_loader<Texture2D, Texture2DLoader>();
+    }
+};
+} // namespace triple::graphics

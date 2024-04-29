@@ -1,4 +1,5 @@
 module;
+#include <cassert>
 #include <memory>
 
 export module triple.refl:value;
@@ -86,7 +87,7 @@ export class Value {
     } m_storage;
 };
 
-export template<typename T>
+export template<class T>
 struct ValueHandlerHeap : public ValueHandlerBase {
     virtual Ref ref(const Value& val) const override { return Ref(static_cast<const T*>(val.m_storage.get_ptr())); }
     virtual void create(Value& val, Ref ref) const override { val.m_storage.set_ptr(new T(ref.value<T>())); }
@@ -99,7 +100,7 @@ struct ValueHandlerHeap : public ValueHandlerBase {
     virtual bool empty() const override { return false; }
 };
 
-export template<typename T>
+export template<class T>
 struct ValueHandlerStack : public ValueHandlerBase {
     virtual Ref ref(const Value& val) const override { return Ref(static_cast<const T*>((void*)&val.m_storage)); }
     virtual void create(Value& val, Ref ref) const override { new ((void*)&val.m_storage) T(ref.value<T>()); }
@@ -112,16 +113,35 @@ struct ValueHandlerStack : public ValueHandlerBase {
     virtual bool empty() const override { return false; }
 };
 
-template<typename T>
+// std::unique_ptr<T>
+export template<class T>
+struct ValueHandlerUniquePtr : public ValueHandlerBase {
+    virtual Ref ref(const Value& val) const override { return Ref(static_cast<const T*>((void*)&val.m_storage)); }
+    virtual void create(Value& val, Ref ref) const override {
+        new ((void*)&val.m_storage) std::unique_ptr<T>(std::move(ref.value<std::unique_ptr<T>>()));
+    }
+    virtual void destroy(Value& val) const override {
+        std::unique_ptr<T>& ptr = *static_cast<std::unique_ptr<T>*>((void*)&val.m_storage);
+        ptr.reset();
+    }
+    virtual void copy(Value& val, const Value& other) const override { assert(false); }
+    virtual void move(Value& val, Value& other) const override { val.swap(other); }
+    virtual bool empty() const override { return false; }
+};
+
+template<class T>
 concept small_object = sizeof(T) <= sizeof(void*) * 3;
 
-export template<typename T>
+export template<class T>
 struct ValueHandler : public ValueHandlerHeap<T> {};
 
 export template<small_object T>
 struct ValueHandler<T> : public ValueHandlerStack<T> {};
 
-template<typename T>
+export template<class T>
+struct ValueHandler<std::unique_ptr<T>> : public ValueHandlerUniquePtr<T> {};
+
+template<class T>
 Value::Value(const T& obj) {
     m_handler = std::make_unique<ValueHandler<T>>();
     m_handler->create(*this, Ref(obj));

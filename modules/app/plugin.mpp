@@ -2,7 +2,7 @@ export module triple.app:plugin;
 
 namespace triple::app {
 
-class App;
+export class App;
 
 export class Plugin {
   public:

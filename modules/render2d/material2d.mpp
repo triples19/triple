@@ -5,14 +5,15 @@ namespace triple::render2d {
 
 class Material2D {
   public:
-    Material2D(graphics::Program& program, graphics::Texture2D& texture) : m_program(program), m_texture(texture) {}
+    Material2D(graphics::Program* program, graphics::Texture2D* texture) :
+        m_program(program), m_texture(texture) {}
 
-    graphics::Program& program() { return m_program; }
-    graphics::Texture2D& texture() { return m_texture; }
+    graphics::Program* program() const { return m_program; }
+    graphics::Texture2D* texture() const { return m_texture; }
 
   private:
-    graphics::Program& m_program;
-    graphics::Texture2D& m_texture;
+    graphics::Program* m_program;
+    graphics::Texture2D* m_texture;
 };
 
 } // namespace triple::render2d

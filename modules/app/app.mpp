@@ -4,15 +4,21 @@ module;
 export module triple.app:app;
 import triple.refl;
 import triple.ecs;
+import triple.base;
 import :plugin;
 
 namespace triple::app {
 
 export enum MainSchedules : std::uint32_t {
+    PreStartUp,
     StartUp,
     PreUpdate,
     Update,
     PostUpdate,
+
+    RenderStart,
+    RenderUpdate,
+    RenderEnd,
 };
 
 export struct AppStates {
@@ -22,10 +28,15 @@ export struct AppStates {
 export class App {
   public:
     App() {
+        m_world.add_schedule(PreStartUp);
         m_world.add_schedule(StartUp);
         m_world.add_schedule(PreUpdate);
         m_world.add_schedule(Update);
         m_world.add_schedule(PostUpdate);
+
+        m_world.add_schedule(RenderStart);
+        m_world.add_schedule(RenderUpdate);
+        m_world.add_schedule(RenderEnd);
 
         add_resource<AppStates>();
     }
@@ -41,7 +52,7 @@ export class App {
     }
 
     template<class F>
-    App& add_system(MainSchedules schedule, F system) {
+    App& add_system(uint32_t schedule, F system) {
         m_world.add_system(schedule, system);
         return *this;
     }
@@ -66,15 +77,25 @@ export class App {
         return *this;
     }
 
-    void run_schedule(MainSchedules schedule) { m_world.run_schedule(schedule); }
+    template<class R>
+    ecs::Resource<R> get_resource() {
+        return m_world.get_resource<R>();
+    }
+
+    void run_schedule(uint32_t schedule) { m_world.run_schedule(schedule); }
 
     void run() {
+        run_schedule(PreStartUp);
         run_schedule(StartUp);
         bool should_stop = false;
         while (!should_stop) {
             run_schedule(PreUpdate);
             run_schedule(Update);
             run_schedule(PostUpdate);
+
+            run_schedule(RenderStart);
+            run_schedule(RenderUpdate);
+            run_schedule(RenderEnd);
 
             auto app_states = m_world.get_resource<AppStates>();
             should_stop = app_states->should_stop;

@@ -4,5 +4,6 @@ target("triple_core")
     add_deps(
         "triple_app",
         "triple_base",
-        "triple_ecs"
+        "triple_ecs",
+        "triple_math"
     )

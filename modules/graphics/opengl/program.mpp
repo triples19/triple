@@ -13,20 +13,10 @@ namespace triple::graphics::opengl {
 
 export class ProgramOpenGL : public graphics::Program {
   public:
-    ProgramOpenGL() { m_program = glCreateProgram(); }
-
-    ~ProgramOpenGL() {
-        if (m_program) {
-            glDeleteProgram(m_program);
-        }
-    }
-
-    ProgramOpenGL(const ProgramOpenGL&) = delete;
-    ProgramOpenGL& operator=(const ProgramOpenGL&) = delete;
-
-    bool link(const Shader& fragShader, const Shader& vertShader) override {
-        glAttachShader(m_program, static_cast<const ShaderOpenGL&>(fragShader).handler());
-        glAttachShader(m_program, static_cast<const ShaderOpenGL&>(vertShader).handler());
+    ProgramOpenGL(const Shader& frag_shader, const Shader& vert_shader) {
+        m_program = glCreateProgram();
+        glAttachShader(m_program, static_cast<const ShaderOpenGL&>(frag_shader).handler());
+        glAttachShader(m_program, static_cast<const ShaderOpenGL&>(vert_shader).handler());
 
         glLinkProgram(m_program);
 
@@ -39,10 +29,15 @@ export class ProgramOpenGL : public graphics::Program {
             log.resize(logLength);
             glGetProgramInfoLog(m_program, logLength, nullptr, log.data());
             log::error("Failed to link program\n{}", log);
-            return false;
         }
-        return opengl_check_error();
+        opengl_check_error();
     }
+
+    // ~ProgramOpenGL() {
+    //     if (m_program) {
+    //         glDeleteProgram(m_program);
+    //     }
+    // }
 
     GLuint handler() const { return m_program; }
 

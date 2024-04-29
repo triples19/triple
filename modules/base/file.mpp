@@ -4,10 +4,15 @@ module;
 #include <sstream>
 
 export module triple.base:file;
+import :log;
 
 namespace triple {
 
 export std::string read_file_str(const std::filesystem::path& path) {
+    if (!std::filesystem::exists(path)) {
+        log::error("File not found: {}", path.string());
+        return "";
+    }
     std::fstream in_file(path);
     std::stringstream ss;
     ss << in_file.rdbuf();

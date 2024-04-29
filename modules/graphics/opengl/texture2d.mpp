@@ -11,14 +11,14 @@ namespace triple::graphics::opengl {
 
 export class Texture2DOpenGL : public Texture2D {
   public:
-    ~Texture2DOpenGL() {
-        if (m_texture) {
-            glDeleteTextures(1, &m_texture);
-        }
-    }
-
-    void init(const TextureDescriptor& desc) override {
-        convert_pixel_format(desc.texture_format, m_internal_format, m_image_format, m_data_type);
+    Texture2DOpenGL(const TextureDescriptor& desc) :
+        m_width(desc.width), m_height(desc.height) {
+        convert_pixel_format(
+            desc.texture_format,
+            m_internal_format,
+            m_image_format,
+            m_data_type
+        );
 
         m_wrap_s = conver_address_mode(desc.sampler_descriptor.s_address_mode);
         m_wrap_t = conver_address_mode(desc.sampler_descriptor.t_address_mode);
@@ -35,14 +35,33 @@ export class Texture2DOpenGL : public Texture2D {
         opengl_check_error();
     }
 
+    ~Texture2DOpenGL() {
+        if (m_texture) {
+            glDeleteTextures(1, &m_texture);
+        }
+    }
+
     void update_data(const byte* data, u32 width, u32 height) override {
+        m_width = width;
+        m_height = height;
+
         glBindTexture(GL_TEXTURE_2D, m_texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, m_wrap_s);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, m_wrap_t);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, m_min_filter);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, m_mag_filter);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, m_internal_format, width, height, 0, m_image_format, m_data_type, data);
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            m_internal_format,
+            width,
+            height,
+            0,
+            m_image_format,
+            m_data_type,
+            data
+        );
 
         opengl_check_error();
 
@@ -57,7 +76,11 @@ export class Texture2DOpenGL : public Texture2D {
 
     GLuint handler() const { return m_texture; }
 
+    virtual int width() const override { return m_width; }
+    virtual int height() const override { return m_height; }
+
   private:
+    int m_width, m_height;
     GLuint m_texture {0};
     GLint m_internal_format;
     GLenum m_data_type;

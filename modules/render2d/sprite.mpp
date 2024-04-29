@@ -1,8 +1,156 @@
+module;
+#include "refl_macros.hpp"
+#include <array>
+#include <vector>
+
 export module triple.render2d:sprite;
 import triple.math;
+import triple.app;
+import triple.graphics;
+import triple.ecs;
+import triple.core;
+import triple.base;
+import :material2d;
+import :render;
+import :camera;
 
 namespace triple::render2d {
 
-export struct Sprite {};
+using namespace ecs;
+using namespace graphics;
+using namespace app;
+using namespace core;
+using namespace math;
+
+export struct Sprite {
+    Color4F color;
+    Vector2 anchor;
+    Handle<Texture2D> texture;
+    Handle<Program> program;
+};
+
+export struct SpriteRendererResource {
+    Buffer* vertex_buffer {nullptr};
+};
+
+void sprite_renderer_setup(Resource<SpriteRendererResource> res) {
+    auto device = RenderDevice::instance();
+    res->vertex_buffer = device->create_buffer(
+        6 * sizeof(V2F_C4F_T2F),
+        BufferType::Vertex,
+        BufferUsage::Dynamic
+    );
+}
+
+void render_sprite(
+    Resource<SpriteRendererResource> sprite_res,
+    Resource<RenderResource> render_res,
+    Resource<AssetServer> asset_server,
+    Query<Sprite, Transform2D> q_sprite,
+    Query<Camera, Transform2D> q_camera
+) {
+    auto* device = render_res->device;
+    auto* draw_list = render_res->draw_list;
+    auto& camera = q_camera.iter().get<Camera>();
+    auto& camera_transform = q_camera.iter().get<Transform2D>();
+    Matrix4x4 proj = camera.projection();
+    Matrix4x4 view = camera_transform.model_matrix().inverse_affine();
+
+    auto do_vertex_transform = [](Vector2& vert,
+                                  const Texture2D& texture,
+                                  const Vector2& anchor,
+                                  const Matrix4x4& model,
+                                  const Matrix4x4& view,
+                                  const Matrix4x4& proj) {
+        Vector2 vert_transformed =
+            (vert - anchor) * Vector2(texture.width(), texture.height());
+        Vector4 vert_homo {vert_transformed.x, vert_transformed.y, 0.0f, 1.0f};
+        vert_homo = proj * view * model * vert_homo;
+        vert = {vert_homo.x, vert_homo.y};
+    };
+    auto sprite_iter = q_sprite.iter();
+    while (sprite_iter) {
+        auto& sprite = sprite_iter.get<Sprite>();
+        auto& transform = sprite_iter.get<Transform2D>();
+        auto& texture = asset_server->get(sprite.texture);
+        auto& program = asset_server->get(sprite.program);
+
+        V2F_C4F_T2F_Quad quad;
+        quad.tl.vertices = {0.0f, 1.0f};
+        quad.tr.vertices = {1.0f, 1.0f};
+        quad.bl.vertices = {0.0f, 0.0f};
+        quad.br.vertices = {1.0f, 0.0f};
+
+        for (auto& x : std::vector {&quad.tl, &quad.tr, &quad.bl, &quad.br}) {
+            x->color = sprite.color;
+            do_vertex_transform(
+                x->vertices,
+                texture,
+                sprite.anchor,
+                transform.model_matrix(),
+                view,
+                proj
+            );
+        }
+
+        quad.tl.tex_coords = {0.0f, 1.0f};
+        quad.tr.tex_coords = {1.0f, 1.0f};
+        quad.bl.tex_coords = {0.0f, 0.0f};
+        quad.br.tex_coords = {1.0f, 0.0f};
+
+        std::array<V2F_C4F_T2F, 6> buffer =
+            {quad.tl, quad.br, quad.bl, quad.tl, quad.tr, quad.br};
+
+        sprite_res->vertex_buffer->update_data(
+            reinterpret_cast<const byte*>(buffer.data())
+        );
+
+        RenderPipelineDescriptor desc {
+            .program = &program,
+            .vertex_layout =
+                {.attributes =
+                     {VertexAttribute {
+                          .location = 0,
+                          .offset = 0,
+                          .format = VertexFormat::Float2,
+                          .normalized = false,
+                      },
+                      VertexAttribute {
+                          .location = 1,
+                          .offset = sizeof(Vector2),
+                          .format = VertexFormat::Float4,
+                          .normalized = false,
+                      },
+                      VertexAttribute {
+                          .location = 2,
+                          .offset = sizeof(Vector2) + sizeof(Color4F),
+                          .format = VertexFormat::Float2,
+                          .normalized = false,
+                      }},
+                 .stride = sizeof(V2F_C4F_T2F)},
+            .render_primitive = RenderPrimitive::Triangles,
+            .rasterization_state = {},
+        };
+        auto pipeline = device->create_render_pipeline(desc);
+        draw_list->bind_render_pipeline(pipeline);
+        draw_list->bind_vertex_buffer(sprite_res->vertex_buffer);
+        draw_list->bind_texture(&texture);
+        draw_list->draw(0, buffer.size());
+
+        sprite_iter.next();
+    }
+}
+
+export class SpritePlugin : public Plugin {
+  public:
+    void setup(App& app) {
+        app.add_resource(SpriteRendererResource {});
+        app.add_system(StartUp, sprite_renderer_setup);
+        app.add_system(RenderUpdate, render_sprite);
+    }
+};
 
 } // namespace triple::render2d
+
+REFL(triple::render2d::Sprite)
+REFL(triple::render2d::SpriteRendererResource)
