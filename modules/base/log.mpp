@@ -1,6 +1,7 @@
 module;
 #include <cstdint>
 #include <cstdlib>
+#include <exception>
 #include <format>
 #include <iostream>
 #include <source_location>
@@ -79,7 +80,7 @@ void error(const FormatString& format, Args&&... args) {
 export template<typename... Args>
 void fatal(const FormatString& format, Args&&... args) {
     detail::log(LogLevel::Fatal, format, std::make_format_args(args...));
-    exit(1);
+    std::terminate();
 }
 
 } // namespace triple::log

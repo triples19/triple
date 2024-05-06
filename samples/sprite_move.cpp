@@ -1,4 +1,5 @@
 #include "common.hpp"
+#include "debug_macros.hpp"
 
 void setup_scene(
     Commands commands,

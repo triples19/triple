@@ -73,7 +73,7 @@ export class World {
     }
 
     template<class... Args>
-    GenericQuery& query() {
+    Query<Args...> query() {
         return query({&refl::type<Args>()...});
     }
 

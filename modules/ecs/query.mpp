@@ -1,8 +1,10 @@
 module;
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <iterator>
 #include <ranges>
+#include <tuple>
 #include <vector>
 
 export module triple.ecs:query;
@@ -100,22 +102,85 @@ export class GenericQuery {
 
     Iterator iter() { return Iterator(this, 0, 0); }
 
-  private:
+  protected:
     ComponentVector m_components;
     std::vector<Archetype*> m_matched;
     std::size_t m_hash;
 };
 
 export template<class... Args>
-class Query : public GenericQuery {
+class Query {
   public:
-    Query(const GenericQuery& q) : GenericQuery(q) {}
+    struct Iterator {
+        using iterator_category = std::forward_iterator_tag;
+        using difference_type = std::ptrdiff_t;
+        using value_type = std::tuple<Args&...>;
+        using pointer = value_type*;
+        using reference = value_type&;
+
+        Iterator(Query* q, size_t archetype_index, size_t entity_index) :
+            m_query(q), m_archetype_index(archetype_index),
+            m_entity_index(entity_index) {}
+
+        template<class T>
+        T& get() const {
+            const auto& type = refl::type<T>();
+            Archetype* archetype = m_query->matched()[m_archetype_index];
+            auto iter = std::ranges::find(archetype->m_components, &type);
+            if (iter == archetype->m_components.end()) {
+                log::error("Iterator::get: type mismatch");
+            }
+            auto index = iter - archetype->m_components.begin();
+            return *static_cast<T*>(
+                archetype->m_columns[index].get(m_entity_index)
+            );
+        }
+
+        value_type operator*() { return {get<Args>()...}; }
+
+        Iterator& operator++() {
+            m_entity_index++;
+            if (m_entity_index ==
+                m_query->matched()[m_archetype_index]->size()) {
+                m_entity_index = 0;
+                m_archetype_index++;
+            }
+            return *this;
+        }
+
+        bool operator==(Iterator& other) const {
+            return m_query == other.m_query &&
+                   m_archetype_index == other.m_archetype_index &&
+                   m_entity_index == other.m_entity_index;
+        }
+
+        bool operator!=(Iterator& other) const { return !(*this == other); }
+
+      private:
+        Query* m_query;
+        size_t m_archetype_index;
+        size_t m_entity_index;
+    };
+
+    Query(GenericQuery& q) : m_query(q) {
+        // maybe check types
+    }
 
     static size_t hash() {
         return TypeVectorHasher {}({&refl::type<Args>()...});
     }
 
     static ComponentVector components() { return {&refl::type<Args>()...}; }
+
+    const std::vector<Archetype*>& matched() const { return m_query.matched(); }
+
+    Iterator iter() { return Iterator(this, 0, 0); }
+
+    Iterator begin() { return Iterator(this, 0, 0); }
+    Iterator end() { return Iterator(this, matched().size(), 0); }
+
+  private:
+    GenericQuery& m_query;
 };
 
 } // namespace triple::ecs

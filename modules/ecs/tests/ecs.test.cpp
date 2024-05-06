@@ -64,15 +64,12 @@ TEST_CASE("World & E-C-S", "[ecs]") {
 
     auto q1 = world.query<Position, Velocity>();
     REQUIRE(q1.matched().size() == 1);
-    auto iter1 = q1.iter();
-    do {
-        auto& pos = iter1.get(refl::type<Position>()).value<Position>();
-        auto& vel = iter1.get(refl::type<Velocity>()).value<Velocity>();
+    for (auto [pos, vel] : q1) {
         REQUIRE(pos.x == 5.0f);
         REQUIRE(pos.y == 6.0f);
         REQUIRE(vel.x == 7.0f);
         REQUIRE(vel.y == 8.0f);
-    } while (iter1.next());
+    }
 
     auto q2 = world.query<Position>();
     REQUIRE(q2.matched().size() == 2);
@@ -80,23 +77,26 @@ TEST_CASE("World & E-C-S", "[ecs]") {
     auto q3 = world.query<Velocity>();
     REQUIRE(q3.matched().size() == 1);
 
-    auto& s1 = world.system().add_query<Position, Velocity>().callback([](ecs::SystemCommands& commands) {
-        auto& q = commands.query();
-        auto iter = q.iter();
-        do {
-            auto& pos = iter.get(refl::type<Position>()).value<Position>();
-            auto& vel = iter.get(refl::type<Velocity>()).value<Velocity>();
-            REQUIRE(pos.x == 5.0f);
-            REQUIRE(pos.y == 6.0f);
-            REQUIRE(vel.x == 7.0f);
-            REQUIRE(vel.y == 8.0f);
-            pos.x = 9.0f;
-            pos.y = 10.0f;
-        } while (iter.next());
-    });
+    auto& s1 = world.system().add_query<Position, Velocity>().callback(
+        [](ecs::SystemCommands& commands) {
+            auto& q = commands.query();
+            auto iter = q.iter();
+            do {
+                auto& pos = iter.get(refl::type<Position>()).value<Position>();
+                auto& vel = iter.get(refl::type<Velocity>()).value<Velocity>();
+                REQUIRE(pos.x == 5.0f);
+                REQUIRE(pos.y == 6.0f);
+                REQUIRE(vel.x == 7.0f);
+                REQUIRE(vel.y == 8.0f);
+                pos.x = 9.0f;
+                pos.y = 10.0f;
+            } while (iter.next());
+        }
+    );
     s1.run();
 
-    // auto& s2 = world.system({&refl::type<Position>()}).each([](ecs::Iterator iter) {
+    // auto& s2 = world.system({&refl::type<Position>()}).each([](ecs::Iterator
+    // iter) {
     //     auto& pos = iter.field(refl::type<Position>()).value<Position>();
     //     REQUIRE(pos.x == 9.0f);
     //     REQUIRE(pos.y == 10.0f);
@@ -105,15 +105,12 @@ TEST_CASE("World & E-C-S", "[ecs]") {
 }
 
 void sys(ecs::Query<Position, Velocity> q) {
-    auto iter = q.iter();
-    do {
-        auto& pos = iter.get<Position>();
-        auto& vel = iter.get<Velocity>();
+    for (auto [pos, vel] : q) {
         REQUIRE(pos.x == 9.0f);
         REQUIRE(pos.y == 10.0f);
         REQUIRE(vel.x == 7.0f);
         REQUIRE(vel.y == 8.0f);
-    } while (iter.next());
+    }
 }
 
 TEST_CASE("System", "[ecs]") {
@@ -136,3 +133,5 @@ TEST_CASE("World & its template functions", "[ecs]") {
     REQUIRE(vel.x == 7.0f);
     REQUIRE(vel.y == 8.0f);
 }
+
+TEST_CASE("Query", "[ecs]") {}
