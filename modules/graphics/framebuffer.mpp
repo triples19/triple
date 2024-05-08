@@ -34,7 +34,10 @@ export class Framebuffer {
         );
         m_depthAttachment = desc.depth_attachment.texture;
     }
-    Texture2D* color_attachment(u32 index) const { return m_colorAttachments[index]; }
+    virtual ~Framebuffer() = default;
+    Texture2D* color_attachment(u32 index) const {
+        return m_colorAttachments[index];
+    }
     Texture2D* depth_attachment() const { return m_depthAttachment; }
 
   protected:

@@ -1,5 +1,6 @@
 module;
 #include <memory>
+#include <string>
 
 export module triple.graphics:device;
 import triple.refl;
@@ -24,13 +25,15 @@ export class RenderDevice {
 
     virtual ~RenderDevice() = default;
 
-    virtual Shader* create_shader() = 0;
+    virtual Shader*
+    create_shader(ShaderStage stage, const std::string& src) = 0;
     virtual const refl::Type& shader_type() = 0;
 
-    virtual Program* create_program(const Shader& frag_shader, const Shader& vert_shader) = 0;
+    virtual Program*
+    create_program(const Shader& frag_shader, const Shader& vert_shader) = 0;
     virtual const refl::Type& program_type() = 0;
 
-    virtual Buffer* create_buffer(size_t size, BufferType type, BufferUsage usage) = 0;
+    virtual Buffer* create_buffer(BufferType type, BufferUsage usage) = 0;
     virtual const refl::Type& buffer_type() = 0;
 
     virtual Texture2D* create_texture2d(const TextureDescriptor& desc) = 0;
@@ -39,10 +42,12 @@ export class RenderDevice {
     virtual DrawList* create_draw_list() = 0;
     virtual const refl::Type& draw_list_type() = 0;
 
-    virtual RenderPipeline* create_render_pipeline(const RenderPipelineDescriptor& desc) = 0;
+    virtual RenderPipeline*
+    create_render_pipeline(const RenderPipelineDescriptor& desc) = 0;
     virtual const refl::Type& render_pipeline_type() = 0;
 
-    virtual Framebuffer* create_framebuffer(const FramebufferDescriptor& desc) = 0;
+    virtual Framebuffer* create_framebuffer(const FramebufferDescriptor& desc
+    ) = 0;
     virtual const refl::Type& frame_buffer_type() = 0;
 };
 

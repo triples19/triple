@@ -1,0 +1,150 @@
+module;
+#include "refl_macros.hpp"
+#include <vector>
+
+export module triple.render2d:debug;
+import triple.math;
+import triple.app;
+import triple.graphics;
+import triple.ecs;
+import triple.core;
+import triple.base;
+import :render;
+import :camera;
+
+namespace triple::render2d {
+
+constexpr auto debug_vertex_shader = R"(#version 330 core
+layout (location = 0) in vec2 vVertex;
+layout (location = 1) in vec4 vColor;
+
+out vec4 fColor;
+
+void main()
+{
+    fColor = vColor;
+    gl_Position = vec4(vVertex, 0.0, 1.0);
+}
+)";
+constexpr auto debug_fragment_shader = R"(#version 330 core
+in vec4 fColor;
+out vec4 oColor;
+
+void main()
+{
+    oColor = fColor;
+}
+)";
+
+export struct Debug {
+    std::vector<graphics::V2F_C4F> data;
+    graphics::Program* program;
+    graphics::Buffer* buffer;
+    inline void
+    line(math::Vector2 from, math::Vector2 to, math::Color4F color) {
+        data.push_back({from, color});
+        data.push_back({to, color});
+    }
+    inline void rect(math::Rect rect, math::Color4F color) {
+        line(rect.min, {rect.max.x, rect.min.y}, color);
+        line({rect.max.x, rect.min.y}, rect.max, color);
+        line(rect.max, {rect.min.x, rect.max.y}, color);
+        line({rect.min.x, rect.max.y}, rect.min, color);
+    }
+    inline void clear() { data.clear(); }
+};
+
+void setup_debug(ecs::Resource<Debug> debug) {
+    auto* device = graphics::RenderDevice::instance();
+    graphics::Shader* vert = device->create_shader(
+        graphics::ShaderStage::Vertex,
+        debug_vertex_shader
+    );
+    graphics::Shader* frag = device->create_shader(
+        graphics::ShaderStage::Fragment,
+        debug_fragment_shader
+    );
+    debug->program = device->create_program(*vert, *frag);
+    delete vert;
+    delete frag;
+    debug->buffer = device->create_buffer(
+        graphics::BufferType::Vertex,
+        graphics::BufferUsage::Dynamic
+    );
+}
+
+void draw_line_clear(ecs::Resource<Debug> debug) {
+    debug->clear();
+}
+
+void draw_line_update(
+    ecs::Resource<Debug> debug,
+    Resource<RenderResource> render,
+    Query<Camera, Transform2D> q_camera
+) {
+    using namespace graphics;
+    using namespace math;
+    auto* device = render->device;
+    auto* draw_list = render->draw_list;
+    auto& camera = q_camera.iter().get<Camera>();
+    auto& camera_transform = q_camera.iter().get<Transform2D>();
+    Matrix4x4 proj = camera.projection();
+    Matrix4x4 view = camera_transform.model_matrix().inverse_affine();
+
+    auto do_vertex_transform =
+        [](Vector2& vert, const Matrix4x4& view, const Matrix4x4& proj) {
+            Vector4 vert_homo {vert.x, vert.y, 0.0f, 1.0f};
+            vert_homo = proj * view * vert_homo;
+            vert = {vert_homo.x, vert_homo.y};
+        };
+
+    for (auto& v2f_c4f : debug->data) {
+        auto& vertices = v2f_c4f.vertices;
+        do_vertex_transform(vertices, view, proj);
+    }
+
+    debug->buffer->update_data(
+        reinterpret_cast<const byte*>(debug->data.data()),
+        debug->data.size() * sizeof(graphics::V2F_C4F)
+    );
+
+    RenderPipelineDescriptor desc {
+        .program = debug->program,
+        .vertex_layout =
+            {.attributes =
+                 {VertexAttribute {
+                      .location = 0,
+                      .offset = 0,
+                      .format = VertexFormat::Float2,
+                      .normalized = false,
+                  },
+                  VertexAttribute {
+                      .location = 1,
+                      .offset = sizeof(Vector2),
+                      .format = VertexFormat::Float4,
+                      .normalized = false,
+                  }},
+             .stride = sizeof(V2F_C4F)},
+        .render_primitive = RenderPrimitive::Lines,
+        .rasterization_state = {},
+    };
+    auto pipeline = device->create_render_pipeline(desc);
+    draw_list->bind_render_pipeline(pipeline);
+    draw_list->bind_vertex_buffer(debug->buffer);
+    draw_list->draw(0, debug->data.size());
+    delete pipeline;
+}
+
+export class DebugPlugin : public app::Plugin {
+  public:
+    void setup(app::App& app) override {
+        app.add_resource<Debug>();
+        app.add_system(app::StartUp, setup_debug);
+        app.add_system(app::PreUpdate, draw_line_clear);
+        app.add_system(app::RenderUpdate, draw_line_update);
+    }
+};
+
+}; // namespace triple::render2d
+
+REFL(triple::render2d::Debug)

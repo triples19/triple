@@ -26,7 +26,9 @@ export class Texture2DLoader : public app::AssetLoader<Texture2D> {
     virtual void* load(const std::filesystem::path& path) override {
         int width, height, nrChannels;
         PixelFormat format;
-        auto data = stbi_load(path.string().c_str(), &width, &height, &nrChannels, 0);
+        stbi_set_flip_vertically_on_load(true);
+        auto data =
+            stbi_load(path.string().c_str(), &width, &height, &nrChannels, 0);
         if (!data) {
             log::error("Failed to load image");
             return nullptr;
@@ -57,16 +59,17 @@ export class Texture2DLoader : public app::AssetLoader<Texture2D> {
 export class ProgramLoader : public app::AssetLoader<Program> {
   public:
     virtual void* load(const std::filesystem::path& path) override {
+        using namespace std::string_literals;
         auto device = RenderDevice::instance();
         auto src = read_file_str(path.string());
-        auto vertex_shader = device->create_shader();
-        if (!vertex_shader->compile(ShaderStage::Vertex, {"#version 330 core\n", "#define VERTEX\n", src})) {
-            return nullptr;
-        }
-        auto fragment_shader = device->create_shader();
-        if (!fragment_shader->compile(ShaderStage::Fragment, {"#version 330 core\n", "#define FRAGMENT\n", src})) {
-            return nullptr;
-        }
+        auto vertex_shader = device->create_shader(
+            ShaderStage::Vertex,
+            "#version 330 core\n"s + "#define VERTEX\n"s + src
+        );
+        auto fragment_shader = device->create_shader(
+            ShaderStage::Fragment,
+            "#version 330 core\n"s + "#define FRAGMENT\n"s + src
+        );
 
         return device->create_program(*vertex_shader, *fragment_shader);
     }

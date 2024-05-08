@@ -46,6 +46,7 @@ export class World {
     Entity entity() {
         Entity id = next_entity_id();
         m_entity_index[id] = EntityRecord {m_root_archetype, 0};
+        m_root_archetype->m_entities.push_back(id);
         return id;
     }
 
@@ -302,7 +303,9 @@ export class World {
             to->m_columns[j].push_back(nullptr);
             ++j;
         }
-        auto to_row = to->m_columns[0].m_count - 1;
+        from->remove(row);
+        to->m_entities.push_back(entity);
+        auto to_row = to->size() - 1;
         m_entity_index[entity].m_archetype = to;
         m_entity_index[entity].m_row = to_row;
         return to_row;

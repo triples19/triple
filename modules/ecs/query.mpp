@@ -136,6 +136,11 @@ class Query {
             );
         }
 
+        Entity entity() const {
+            return m_query->matched()[m_archetype_index]
+                ->m_entities[m_entity_index];
+        }
+
         value_type operator*() { return {get<Args>()...}; }
 
         Iterator& operator++() {
@@ -143,6 +148,10 @@ class Query {
             if (m_entity_index ==
                 m_query->matched()[m_archetype_index]->size()) {
                 m_entity_index = 0;
+                m_archetype_index++;
+            }
+            while (m_archetype_index < m_query->matched().size() &&
+                   m_query->matched()[m_archetype_index]->size() == 0) {
                 m_archetype_index++;
             }
             return *this;
@@ -174,10 +183,17 @@ class Query {
 
     const std::vector<Archetype*>& matched() const { return m_query.matched(); }
 
-    Iterator iter() { return Iterator(this, 0, 0); }
+    Iterator iter() { return begin(); }
 
-    Iterator begin() { return Iterator(this, 0, 0); }
-    Iterator end() { return Iterator(this, matched().size(), 0); }
+    Iterator begin() {
+        size_t archetype_index = 0;
+        while (archetype_index < matched().size() &&
+               matched()[archetype_index]->size() == 0) {
+            archetype_index++;
+        }
+        return Iterator {this, archetype_index, 0};
+    }
+    Iterator end() { return Iterator {this, matched().size(), 0}; }
 
   private:
     GenericQuery& m_query;

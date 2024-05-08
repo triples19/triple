@@ -74,7 +74,7 @@ export enum class SamplerAddressMode : u32 {
 
 export enum class RenderPrimitive : u32 {
     Point,
-    Line,
+    Lines,
     LineStrip,
     Triangles,
     TrianglesStrip,

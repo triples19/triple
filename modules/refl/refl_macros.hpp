@@ -24,11 +24,22 @@
     }                                        \
     }
 
-#define REFL(name)                           \
-    namespace triple::refl {                 \
-    export template<>                        \
-    const Type& type<name>() {               \
-        static Type ty(#name, sizeof(name)); \
-        return ty;                           \
-    }                                        \
-    }
+#ifdef NOMODULE
+#    define REFL(name)                           \
+        namespace triple::refl {                 \
+        template<>                               \
+        const Type& type<name>() {               \
+            static Type ty(#name, sizeof(name)); \
+            return ty;                           \
+        }                                        \
+        }
+#else
+#    define REFL(name)                           \
+        namespace triple::refl {                 \
+        export template<>                        \
+        const Type& type<name>() {               \
+            static Type ty(#name, sizeof(name)); \
+            return ty;                           \
+        }                                        \
+        }
+#endif

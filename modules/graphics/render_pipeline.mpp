@@ -37,7 +37,9 @@ export struct RenderPipelineDescriptor {
 export class RenderPipeline {
   public:
     RenderPipeline(const RenderPipelineDescriptor& desc) :
-        m_program(desc.program), m_vertex_layout(desc.vertex_layout), m_render_primitive(desc.render_primitive) {}
+        m_program(desc.program), m_vertex_layout(desc.vertex_layout),
+        m_render_primitive(desc.render_primitive) {}
+    virtual ~RenderPipeline() = default;
 
     Program* program() const { return m_program; }
     void set_program(Program* p) { m_program = p; }

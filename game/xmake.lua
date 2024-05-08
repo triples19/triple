@@ -1,0 +1,5 @@
+target("game")
+    set_kind("binary")
+    add_files("main.cpp")
+    add_deps("triple")
+    set_targetdir("$(buildir)/game")

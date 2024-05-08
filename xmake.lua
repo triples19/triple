@@ -7,6 +7,7 @@ add_packages("stb", "glfw")
 includes("thirdparty")
 includes("modules")
 includes("samples")
+includes("game")
 
 -- after_link(function(target)
 --     local ifc_dir = target:autogendir()

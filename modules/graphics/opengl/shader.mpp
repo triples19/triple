@@ -12,6 +12,11 @@ namespace triple::graphics::opengl {
 
 export class ShaderOpenGL : public graphics::Shader {
   public:
+    ShaderOpenGL(ShaderStage stage, const std::string& src) {
+        const char* src_ptr = src.c_str();
+        compile(stage, &src_ptr, 1);
+    }
+
     virtual ~ShaderOpenGL() {
         if (m_shader) {
             glDeleteShader(m_shader);
@@ -21,8 +26,7 @@ export class ShaderOpenGL : public graphics::Shader {
 
     GLuint handler() const { return m_shader; }
 
-  protected:
-    virtual bool compile_internal(ShaderStage stage, const char** src, size_t size) {
+    bool compile(ShaderStage stage, const char** src, size_t size) {
         if (m_shader) {
             glDeleteShader(m_shader);
         }

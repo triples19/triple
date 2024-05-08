@@ -55,6 +55,8 @@ void render_start(
 ) {
     auto device = render_res->device;
     auto draw_list = render_res->draw_list;
+    render_res->color_tex
+        ->update_data(nullptr, win_res->width, win_res->height);
     draw_list->begin(RenderPassDescriptor {
         .framebuffer = render_res->framebuffer,
         .clear_color = true,

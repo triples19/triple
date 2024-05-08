@@ -2,6 +2,7 @@ module;
 #include <glad/glad.h>
 
 #include <memory>
+#include <string>
 
 export module triple.graphics.opengl:device;
 import triple.graphics;
@@ -28,7 +29,10 @@ export class RenderDeviceOpenGL : public RenderDevice {
 
     virtual ~RenderDeviceOpenGL() = default;
 
-    virtual Shader* create_shader() override { return new ShaderOpenGL(); }
+    virtual Shader*
+    create_shader(ShaderStage stage, const std::string& src) override {
+        return new ShaderOpenGL(stage, src);
+    }
     virtual const refl::Type& shader_type() {
         return refl::type<ShaderOpenGL>();
     }
@@ -43,9 +47,8 @@ export class RenderDeviceOpenGL : public RenderDevice {
         return refl::type<ProgramOpenGL>();
     }
 
-    virtual Buffer*
-    create_buffer(size_t size, BufferType type, BufferUsage usage) override {
-        return new BufferOpenGL(size, type, usage);
+    virtual Buffer* create_buffer(BufferType type, BufferUsage usage) override {
+        return new BufferOpenGL(type, usage);
     }
     virtual const refl::Type& buffer_type() override {
         return refl::type<BufferOpenGL>();

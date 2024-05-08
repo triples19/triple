@@ -43,7 +43,12 @@ export bool opengl_check_error() {
     return false;
 }
 
-void convert_pixel_format(PixelFormat pixel_format, GLint& interal_format, GLuint& format, GLenum& type) {
+void convert_pixel_format(
+    PixelFormat pixel_format,
+    GLint& interal_format,
+    GLuint& format,
+    GLenum& type
+) {
     switch (pixel_format) {
         case PixelFormat::RGBA8888: {
             interal_format = GL_RGBA;
@@ -140,8 +145,8 @@ GLenum convert_render_primitive(RenderPrimitive render_primitive) {
     switch (render_primitive) {
         case RenderPrimitive::Point:
             return GL_POINT;
-        case RenderPrimitive::Line:
-            return GL_LINE;
+        case RenderPrimitive::Lines:
+            return GL_LINES;
         case RenderPrimitive::LineStrip:
             return GL_LINE_STRIP;
         case RenderPrimitive::Triangles:

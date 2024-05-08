@@ -23,8 +23,8 @@ using namespace core;
 using namespace math;
 
 export struct Sprite {
-    Color4F color;
-    Vector2 anchor;
+    Color4F color {1.0f, 1.0f, 1.0f, 1.0f};
+    Vector2 anchor {0.5f, 0.5f};
     Handle<Texture2D> texture;
     Handle<Program> program;
 };
@@ -35,11 +35,8 @@ export struct SpriteRendererResource {
 
 void sprite_renderer_setup(Resource<SpriteRendererResource> res) {
     auto device = RenderDevice::instance();
-    res->vertex_buffer = device->create_buffer(
-        6 * sizeof(V2F_C4F_T2F),
-        BufferType::Vertex,
-        BufferUsage::Dynamic
-    );
+    res->vertex_buffer =
+        device->create_buffer(BufferType::Vertex, BufferUsage::Dynamic);
 }
 
 void render_sprite(
@@ -69,9 +66,7 @@ void render_sprite(
         vert = {vert_homo.x, vert_homo.y};
     };
     auto sprite_iter = q_sprite.iter();
-    while (sprite_iter) {
-        auto& sprite = sprite_iter.get<Sprite>();
-        auto& transform = sprite_iter.get<Transform2D>();
+    for (auto [sprite, transform] : q_sprite) {
         auto& texture = asset_server->get(sprite.texture);
         auto& program = asset_server->get(sprite.program);
 
@@ -102,7 +97,8 @@ void render_sprite(
             {quad.tl, quad.br, quad.bl, quad.tl, quad.tr, quad.br};
 
         sprite_res->vertex_buffer->update_data(
-            reinterpret_cast<const byte*>(buffer.data())
+            reinterpret_cast<const byte*>(buffer.data()),
+            6 * sizeof(V2F_C4F_T2F)
         );
 
         RenderPipelineDescriptor desc {
@@ -136,8 +132,7 @@ void render_sprite(
         draw_list->bind_vertex_buffer(sprite_res->vertex_buffer);
         draw_list->bind_texture(&texture);
         draw_list->draw(0, buffer.size());
-
-        sprite_iter.next();
+        delete pipeline;
     }
 }
 

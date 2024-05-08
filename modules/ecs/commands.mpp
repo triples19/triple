@@ -1,3 +1,6 @@
+module;
+#include <utility>
+
 export module triple.ecs:commands;
 import triple.refl;
 import triple.base;
@@ -15,6 +18,14 @@ export class EntityCommands {
     EntityCommands& remove(const refl::Type& component_type);
     void despawn();
     Entity id();
+
+    template<class C, class... Cs>
+        requires(sizeof...(Cs) > 0)
+    EntityCommands& add(C&& component, Cs&&... components) {
+        add(std::forward<C>(component));
+        add(std::forward<Cs>(components)...);
+        return *this;
+    }
 
     template<class C>
     EntityCommands& remove() {

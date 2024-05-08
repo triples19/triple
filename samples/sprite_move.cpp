@@ -34,9 +34,7 @@ void move_sprite(
     Resource<Time> time,
     Query<Sprite, Transform2D> query
 ) {
-    auto iter = query.iter();
-    while (iter) {
-        auto& transform = iter.get<Transform2D>();
+    for (auto [sprite, transform] : query) {
         float speed = 200.0f;
         if (key_input->pressed(KeyCode::Up)) {
             transform.position.y += speed * time->delta();
@@ -50,7 +48,6 @@ void move_sprite(
         if (key_input->pressed(KeyCode::Right)) {
             transform.position.x += speed * time->delta();
         }
-        iter.next();
     }
 }
 

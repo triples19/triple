@@ -10,8 +10,8 @@ namespace triple::graphics::opengl {
 
 export class BufferOpenGL : public graphics::Buffer {
   public:
-    BufferOpenGL(size_t size, BufferType type, BufferUsage usage) :
-        Buffer(size, type, usage), m_size(size), m_type(convert_buffer_type(type)),
+    BufferOpenGL(BufferType type, BufferUsage usage) :
+        Buffer(type, usage), m_type(convert_buffer_type(type)),
         m_usage(convert_buffer_usage(usage)) {
         glGenBuffers(1, &m_buffer);
     }
@@ -22,9 +22,9 @@ export class BufferOpenGL : public graphics::Buffer {
         }
     }
 
-    void update_data(const byte* data) override {
+    void update_data(const byte* data, size_t size) override {
         glBindBuffer(m_type, m_buffer);
-        glBufferData(m_type, m_size, data, m_usage);
+        glBufferData(m_type, size, data, m_usage);
 
         opengl_check_error();
 
@@ -35,7 +35,6 @@ export class BufferOpenGL : public graphics::Buffer {
 
   private:
     GLuint m_buffer;
-    size_t m_size;
     GLenum m_type;
     GLenum m_usage;
 };

@@ -21,14 +21,19 @@ export struct Column {
     std::size_t m_count;
     std::size_t m_capacity;
 
-    Column(std::size_t element_size) : m_element_size(element_size), m_count(0), m_capacity(64) {
+    Column(std::size_t element_size) :
+        m_element_size(element_size), m_count(0), m_capacity(64) {
         m_elements = std::malloc(element_size * m_capacity);
     }
 
     void set(std::size_t row, const void* element) {
         if (element == nullptr)
             return;
-        std::memcpy(static_cast<char*>(m_elements) + row * m_element_size, element, m_element_size);
+        std::memcpy(
+            static_cast<char*>(m_elements) + row * m_element_size,
+            element,
+            m_element_size
+        );
     }
 
     void push_back(const void* element) {
@@ -40,7 +45,9 @@ export struct Column {
         ++m_count;
     }
 
-    void* get(std::size_t row) { return static_cast<char*>(m_elements) + row * m_element_size; }
+    void* get(std::size_t row) {
+        return static_cast<char*>(m_elements) + row * m_element_size;
+    }
 
     void remove(std::size_t row) {
         std::memcpy(
@@ -51,6 +58,7 @@ export struct Column {
         --m_count;
     }
 };
+
 export struct Archetype {
     struct Edge {
         Archetype *m_add, *m_remove;
@@ -59,12 +67,18 @@ export struct Archetype {
     ComponentVector m_components;
     std::vector<Column> m_columns;
     std::unordered_map<ComponentId, Edge> m_edges;
+    std::vector<Entity> m_entities;
 
     std::size_t size() const {
         if (m_columns.empty())
             return 0;
         else
             return m_columns[0].m_count;
+    }
+
+    void remove(std::size_t row) {
+        m_entities[row] = m_entities.back();
+        m_entities.pop_back();
     }
 
     std::size_t hash() const { return TypeVectorHasher {}(m_components); }
