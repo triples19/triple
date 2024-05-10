@@ -48,17 +48,17 @@ TEST_CASE("World & E-C-S", "[ecs]") {
     world.add_component<Position>(e);
     world.add_component<Velocity>(e);
 
-    refl::Ref c = world.get_component(e, refl::type<Position>());
+    refl::Ref c = world.(e, refl::type<Position>());
     c.value<Position>().x = 5.0f;
     c.value<Position>().y = 6.0f;
-    c = world.get_component(e, refl::type<Position>());
+    c = world.(e, refl::type<Position>());
     REQUIRE(c.value<Position>().x == 5.0f);
     REQUIRE(c.value<Position>().y == 6.0f);
 
-    c = world.get_component(e, refl::type<Velocity>());
+    c = world.(e, refl::type<Velocity>());
     c.value<Velocity>().x = 7.0f;
     c.value<Velocity>().y = 8.0f;
-    c = world.get_component(e, refl::type<Velocity>());
+    c = world.(e, refl::type<Velocity>());
     REQUIRE(c.value<Velocity>().x == 7.0f);
     REQUIRE(c.value<Velocity>().y == 8.0f);
 
@@ -125,11 +125,11 @@ TEST_CASE("World & its template functions", "[ecs]") {
     world.add_component(e, Position {5.0f, 6.0f});
     world.add_component(e, Velocity {7.0f, 8.0f});
 
-    Position& pos = world.get_component<Position>(e);
+    Position& pos = world.<Position>(e);
     REQUIRE(pos.x == 5.0f);
     REQUIRE(pos.y == 6.0f);
 
-    Velocity& vel = world.get_component<Velocity>(e);
+    Velocity& vel = world.<Velocity>(e);
     REQUIRE(vel.x == 7.0f);
     REQUIRE(vel.y == 8.0f);
 }

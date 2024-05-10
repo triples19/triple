@@ -1,0 +1,57 @@
+module;
+#include <stdexcept>
+#include <string>
+#include <unordered_map>
+
+export module triple.refl:cls;
+import triple.base;
+import :member;
+import :type;
+import :type_of;
+
+namespace triple::refl {
+
+export class Cls {
+  public:
+    static std::unordered_map<TypeId, Cls> s_classes;
+    template<class T>
+    static Cls& new_cls() {
+        auto [iter, success] = s_classes.emplace(type<T>().id(), type<T>());
+        return iter->second;
+    }
+
+    Cls(const Type& type) : m_type(type) {}
+
+    ~Cls() {
+        for (auto& [name, member] : m_members) {
+            delete member;
+        }
+    }
+
+    template<class P>
+    Cls& add_member(const std::string& name, P ptr) {
+        m_members[name] = new TMember(name, ptr);
+        return *this;
+    }
+
+    Member& member(const std::string& name) {
+        if (m_members.find(name) == m_members.end()) {
+            throw std::runtime_error("Member not found: " + name);
+        }
+        return *m_members[name];
+    }
+
+  private:
+    const Type& m_type;
+    std::unordered_map<std::string, Member*> m_members;
+};
+
+std::unordered_map<TypeId, Cls> Cls::s_classes {};
+
+export template<class T>
+Cls& cls() {
+    auto iter = Cls::s_classes.find(type<T>().id());
+    return iter->second;
+}
+
+} // namespace triple::refl

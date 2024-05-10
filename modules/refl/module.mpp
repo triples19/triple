@@ -1,7 +1,11 @@
 export module triple.refl;
 export import :builtin_types;
+export import :callable;
+export import :cls;
+export import :constructor;
 export import :member;
 export import :method;
+export import :qual_type;
 export import :ref;
 export import :type_of;
 export import :type;

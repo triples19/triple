@@ -2,7 +2,8 @@ add_rules("mode.debug", "mode.release")
 set_languages("c++20")
 
 add_requires("catch2", "glfw", "stb")
-add_packages("stb", "glfw")
+add_requires("imgui", {configs = {glfw = true, opengl3 = true}})
+add_packages("glfw", "stb")
 
 includes("thirdparty")
 includes("modules")

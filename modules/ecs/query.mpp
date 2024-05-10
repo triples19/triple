@@ -24,50 +24,48 @@ export class GenericQuery {
       public:
     };
 
-    class Iterator {
-      public:
-        Iterator(GenericQuery* q, size_t archetype_index, size_t entity_index) :
-            m_query(q), m_archetype_index(archetype_index),
-            m_entity_index(entity_index) {}
+    // class Iterator {
+    //   public:
+    //     Iterator(GenericQuery* q, size_t archetype_index, size_t
+    //     entity_index) :
+    //         m_query(q), m_archetype_index(archetype_index),
+    //         m_entity_index(entity_index) {}
 
-        refl::Ref get(const refl::Type& type) {
-            Archetype* archetype = m_query->matched()[m_archetype_index];
-            auto iter = std::ranges::find(m_query->components(), &type);
-            if (iter == archetype->m_components.end()) {
-                log::error("Iterator::get: type mismatch");
-                return nullptr;
-            }
-            auto index = iter - m_query->components().begin();
-            return refl::Ref {
-                archetype->m_columns[index].get(m_entity_index),
-                type
-            };
-        }
+    //     refl::Ref get(const refl::Type& type) {
+    //         Archetype* archetype = m_query->matched()[m_archetype_index];
+    //         auto iter = std::ranges::find(m_query->components(), &type);
+    //         if (iter == archetype->m_components.end()) {
+    //             log::error("Iterator::get: type mismatch");
+    //             return nullptr;
+    //         }
+    //         Entity entity = archetype->entities()[m_entity_index];
+    //         return refl::Ref(archetype->get_component(entity, type), type);
+    //     }
 
-        template<class T>
-        T& get() {
-            return get(refl::type<T>()).value<T>();
-        }
+    //     template<class T>
+    //     T& get() {
+    //         return get(refl::type<T>()).value<T>();
+    //     }
 
-        bool next() {
-            m_entity_index++;
-            if (m_entity_index ==
-                m_query->matched()[m_archetype_index]->size()) {
-                m_entity_index = 0;
-                m_archetype_index++;
-            }
-            return m_archetype_index != m_query->matched().size();
-        }
+    //     bool next() {
+    //         m_entity_index++;
+    //         if (m_entity_index ==
+    //             m_query->matched()[m_archetype_index]->size()) {
+    //             m_entity_index = 0;
+    //             m_archetype_index++;
+    //         }
+    //         return m_archetype_index != m_query->matched().size();
+    //     }
 
-        operator bool() const {
-            return m_archetype_index != m_query->matched().size();
-        }
+    //     operator bool() const {
+    //         return m_archetype_index != m_query->matched().size();
+    //     }
 
-      private:
-        GenericQuery* m_query;
-        size_t m_archetype_index;
-        size_t m_entity_index;
-    };
+    //   private:
+    //     GenericQuery* m_query;
+    //     size_t m_archetype_index;
+    //     size_t m_entity_index;
+    // };
 
   public:
     GenericQuery(ComponentVector components) : m_components(components) {
@@ -78,11 +76,11 @@ export class GenericQuery {
     std::size_t hash() const { return m_hash; }
 
     bool matches(Archetype* archetype) {
-        if (archetype->m_components.size() == 0)
+        if (archetype->components().size() == 0)
             return false;
         for (auto component : m_components) {
-            if (std::ranges::find(archetype->m_components, component) ==
-                archetype->m_components.end()) {
+            if (std::ranges::find(archetype->components(), component) ==
+                archetype->components().end()) {
                 return false;
             }
         }
@@ -100,7 +98,7 @@ export class GenericQuery {
 
     const ComponentVector& components() const { return m_components; }
 
-    Iterator iter() { return Iterator(this, 0, 0); }
+    // Iterator iter() { return Iterator(this, 0, 0); }
 
   protected:
     ComponentVector m_components;
@@ -126,19 +124,13 @@ class Query {
         T& get() const {
             const auto& type = refl::type<T>();
             Archetype* archetype = m_query->matched()[m_archetype_index];
-            auto iter = std::ranges::find(archetype->m_components, &type);
-            if (iter == archetype->m_components.end()) {
-                log::error("Iterator::get: type mismatch");
-            }
-            auto index = iter - archetype->m_components.begin();
-            return *static_cast<T*>(
-                archetype->m_columns[index].get(m_entity_index)
-            );
+            Entity entity = archetype->entities()[m_entity_index];
+            return *static_cast<T*>(archetype->get_component(entity, type));
         }
 
         Entity entity() const {
-            return m_query->matched()[m_archetype_index]
-                ->m_entities[m_entity_index];
+            return m_query->matched()[m_archetype_index]->entities(
+            )[m_entity_index];
         }
 
         value_type operator*() { return {get<Args>()...}; }
@@ -159,8 +151,9 @@ class Query {
 
         bool operator==(Iterator& other) const {
             return m_query == other.m_query &&
-                   m_archetype_index == other.m_archetype_index &&
-                   m_entity_index == other.m_entity_index;
+                   m_archetype_index == other.m_archetype_index
+                //    && m_entity_index == other.m_entity_index;
+                ;
         }
 
         bool operator!=(Iterator& other) const { return !(*this == other); }

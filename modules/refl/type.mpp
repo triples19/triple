@@ -1,6 +1,7 @@
 module;
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 
 export module triple.refl:type;
 
@@ -53,7 +54,15 @@ export class Type {
         return ty;
     }
 
-    const char* name() const { return m_name; }
+    const char* name() const {
+        const char* last_simicolon = strrchr(m_name, ':');
+        if (last_simicolon != nullptr)
+            return last_simicolon + 1;
+        else
+            return m_name;
+    }
+
+    const char* full_name() const { return m_name; }
 
     std::size_t size() const { return m_size; }
 

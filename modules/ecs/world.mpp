@@ -2,6 +2,7 @@ module;
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <unordered_map>
@@ -45,19 +46,21 @@ export class World {
 
     Entity entity() {
         Entity id = next_entity_id();
-        m_entity_index[id] = EntityRecord {m_root_archetype, 0};
-        m_root_archetype->m_entities.push_back(id);
+        m_entity_archetype[id] = m_root_archetype;
+        m_root_archetype->add_entity(id);
         return id;
     }
 
+    bool has_entity(Entity entity) const {
+        // return m_entity_index.find(entity) != m_entity_index.end();
+        return m_entity_archetype.find(entity) != m_entity_archetype.end();
+    }
+
     void despawn(Entity entity) {
-        EntityRecord& record = m_entity_index[entity];
-        Archetype* archetype = record.m_archetype;
-        std::size_t row = record.m_row;
-        for (auto& column : archetype->m_columns) {
-            column.remove(row);
-        }
-        m_entity_index.erase(entity);
+        assert(has_entity(entity));
+        Archetype* archetype = m_entity_archetype[entity];
+        archetype->remove_entity(entity);
+        m_entity_archetype.erase(entity);
     }
 
     GenericQuery& query(ComponentVector components) {
@@ -99,11 +102,10 @@ export class World {
     void run_system(SystemId id) { m_systems[id]->run(); }
 
     void add_component(Entity entity, const refl::Type& component) {
-        EntityRecord& record = m_entity_index[entity];
-        Archetype* archetype = record.m_archetype;
+        Archetype* archetype = m_entity_archetype[entity];
         auto& next_archetype = archetype->m_edges[component.id()].m_add;
         if (next_archetype == nullptr) {
-            ComponentVector components = archetype->m_components;
+            ComponentVector components = archetype->components();
             components.push_back(&component);
             next_archetype = create_archetype(components);
         }
@@ -127,12 +129,11 @@ export class World {
     // }
 
     void remove_component(Entity entity, const refl::Type& component) {
-        EntityRecord& record = m_entity_index[entity];
-        Archetype* archetype = record.m_archetype;
+        Archetype* archetype = m_entity_archetype[entity];
         Archetype*& next_archetype =
             archetype->m_edges[component.id()].m_remove;
         if (next_archetype == nullptr) {
-            ComponentVector components = archetype->m_components;
+            ComponentVector components = archetype->components();
             components.erase(
                 std::remove(components.begin(), components.end(), &component),
                 components.end()
@@ -148,20 +149,37 @@ export class World {
     }
 
     refl::Ref get_component(Entity entity, const refl::Type& component_type) {
-        auto& record = m_entity_index[entity];
-        auto* archetype = record.m_archetype;
-        auto iter = std::ranges::find(archetype->m_components, &component_type);
-        if (iter == archetype->m_components.end()) {
-            return nullptr;
-        }
-        auto& column =
-            archetype->m_columns[iter - archetype->m_components.begin()];
-        return refl::Ref {column.get(record.m_row), component_type};
+        return refl::Ref {
+            m_entity_archetype[entity]->get_component(entity, component_type),
+            component_type
+        };
+        // auto& record = m_entity_index[entity];
+        // auto* archetype = record.m_archetype;
+        // auto iter = std::ranges::find(archetype->m_components,
+        // &component_type); if (iter == archetype->m_components.end()) {
+        //     return nullptr;
+        // }
+        // auto& column =
+        //     archetype->m_columns[iter - archetype->m_components.begin()];
+        // return refl::Ref {column.get(record.m_row), component_type};
     }
 
     template<class T>
     T& get_component(Entity entity) {
         return get_component(entity, refl::type<T>()).value<T>();
+    }
+
+    bool has_component(Entity entity, const refl::Type& component_type) {
+        return m_entity_archetype[entity]->has_component(component_type);
+        // auto& record = m_entity_index[entity];
+        // auto* archetype = record.m_archetype;
+        // auto iter = std::ranges::find(archetype->m_components,
+        // &component_type); return iter != archetype->m_components.end();
+    }
+
+    template<class T>
+    bool has_component(Entity entity) {
+        return has_component(entity, refl::type<T>());
     }
 
     Archetype* get_archetype(ComponentVector components) {
@@ -231,7 +249,21 @@ export class World {
         auto& schedule = get_schedule(id);
         for (SystemId system_id : schedule.systems()) {
             run_system(system_id);
+            run_commands();
         }
+    }
+
+    std::vector<Archetype*> archetypes() { return m_archetypes; }
+
+    void add_command(std::function<void(World&)> command) {
+        m_commands.push_back(command);
+    }
+
+    void run_commands() {
+        for (auto& command : m_commands) {
+            command(*this);
+        }
+        m_commands.clear();
     }
 
   private:
@@ -251,19 +283,8 @@ export class World {
     }
 
     Archetype* create_archetype(const ComponentVector& components) {
-        m_archetypes.push_back(new Archetype {});
-        Archetype* archetype = m_archetypes.back();
-        archetype->m_id = next_archetype_id();
-        archetype->m_components = components;
-        std::ranges::sort(archetype->m_components);
-
-        // init columns
-        archetype->m_columns.reserve(archetype->m_components.size());
-        for (std::size_t i = 0; i < archetype->m_components.size(); ++i) {
-            archetype->m_columns.push_back(
-                Column {archetype->m_components[i]->size()}
-            );
-        }
+        Archetype* archetype = new Archetype(next_archetype_id(), components);
+        m_archetypes.push_back(archetype);
 
         // add to map
         m_archetype_map[archetype->hash()] = archetype;
@@ -275,40 +296,19 @@ export class World {
     }
 
     std::size_t move_entity(Archetype* from, Entity entity, Archetype* to) {
-        std::size_t row = m_entity_index[entity].m_row;
-        std::size_t i = 0, j = 0;
-        while (i < from->m_components.size() && j < to->m_components.size()) {
-            Column& from_column = from->m_columns[i];
-            Column& to_column = to->m_columns[j];
-            if (from->m_components[i] < to->m_components[j]) {
-                if (from != m_root_archetype)
-                    from_column.remove(row);
-                ++i;
-            } else if (from->m_components[i] > to->m_components[j]) {
-                to_column.push_back(nullptr);
-                ++j;
-            } else {
-                to_column.push_back(from_column.get(row));
-                if (from != m_root_archetype)
-                    from_column.remove(row);
-                ++i;
-                ++j;
+        to->add_entity(entity);
+        for (auto component : to->components()) {
+            if (from->has_component(*component)) {
+                to->set_component(
+                    entity,
+                    *component,
+                    from->get_component(entity, *component)
+                );
             }
         }
-        while (i < from->m_components.size()) {
-            from->m_columns[i].remove(row);
-            ++i;
-        }
-        while (j < to->m_components.size()) {
-            to->m_columns[j].push_back(nullptr);
-            ++j;
-        }
-        from->remove(row);
-        to->m_entities.push_back(entity);
-        auto to_row = to->size() - 1;
-        m_entity_index[entity].m_archetype = to;
-        m_entity_index[entity].m_row = to_row;
-        return to_row;
+        from->remove_entity(entity);
+        m_entity_archetype[entity] = to;
+        return 0;
     }
 
   private:
@@ -319,13 +319,15 @@ export class World {
     // std::unordered_map So I'm using std::map instead for now "fatal error
     // C1001: Internal compiler error. (compiler file 'msc1.cpp', line 1587)"
 
-    std::map<std::size_t, EntityRecord> m_entity_index;
+    std::map<Entity, Archetype*> m_entity_archetype;
+    // std::map<std::size_t, EntityRecord> m_entity_index;
     std::map<std::size_t, Archetype*> m_archetype_map;
     std::map<std::size_t, GenericQuery*> m_queries;
     std::map<SystemId, System*> m_systems;
     std::map<refl::TypeId, std::unique_ptr<Events>> m_events;
     std::map<refl::TypeId, refl::Value> m_resources;
     std::map<ScheduleId, std::unique_ptr<Schedule>> m_schedules;
+    std::vector<std::function<void(World&)>> m_commands;
 };
 
 } // namespace triple::ecs

@@ -1,4 +1,6 @@
 module;
+#include <algorithm>
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <unordered_map>
@@ -8,12 +10,13 @@ export module triple.ecs:archetype;
 import :entity;
 import :utils;
 import triple.refl;
+import triple.base;
 
 namespace triple::ecs {
 
-using ComponentId = std::uint32_t;
-using ArchetypeId = std::uint32_t;
-using ComponentVector = std::vector<const refl::Type*>;
+export using ComponentId = std::uint32_t;
+export using ArchetypeId = std::uint32_t;
+export using ComponentVector = std::vector<const refl::Type*>;
 
 export struct Column {
     void* m_elements;
@@ -28,12 +31,17 @@ export struct Column {
 
     void set(std::size_t row, const void* element) {
         if (element == nullptr)
-            return;
-        std::memcpy(
-            static_cast<char*>(m_elements) + row * m_element_size,
-            element,
-            m_element_size
-        );
+            std::memset(
+                static_cast<char*>(m_elements) + row * m_element_size,
+                0,
+                m_element_size
+            );
+        else
+            std::memcpy(
+                static_cast<char*>(m_elements) + row * m_element_size,
+                element,
+                m_element_size
+            );
     }
 
     void push_back(const void* element) {
@@ -50,11 +58,12 @@ export struct Column {
     }
 
     void remove(std::size_t row) {
-        std::memcpy(
-            static_cast<char*>(m_elements) + row * m_element_size,
-            static_cast<char*>(m_elements) + (m_count - 1) * m_element_size,
-            m_element_size
-        );
+        if (row != m_count - 1)
+            std::memcpy(
+                static_cast<char*>(m_elements) + row * m_element_size,
+                static_cast<char*>(m_elements) + (m_count - 1) * m_element_size,
+                m_element_size
+            );
         --m_count;
     }
 };
@@ -63,25 +72,113 @@ export struct Archetype {
     struct Edge {
         Archetype *m_add, *m_remove;
     };
+    std::unordered_map<ComponentId, Edge> m_edges;
+
+    Archetype(ArchetypeId id, const ComponentVector& components) :
+        m_id(id), m_components(components) {
+        std::ranges::sort(m_components);
+        for (const auto& component : m_components) {
+            m_columns.emplace_back(component->size());
+        }
+        assert(m_entity_row.size() == m_entities.size());
+    }
+
+    std::size_t size() const { return m_entity_row.size(); }
+
+    bool has_entity(Entity entity) const {
+        return m_entity_row.find(entity) != m_entity_row.end();
+    }
+
+    bool check() const {
+        if (m_entities.size() != m_entity_row.size()) {
+            return false;
+        }
+        for (auto entity : m_entities) {
+            if (m_entity_row.find(entity) == m_entity_row.end()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    bool has_component(const refl::Type& component) const {
+        return std::find(
+                   m_components.begin(),
+                   m_components.end(),
+                   &component
+               ) != m_components.end();
+    }
+
+    void add_entity(Entity entity) {
+        assert(!has_entity(entity));
+        m_entity_row[entity] = m_entities.size();
+        m_entities.push_back(entity);
+        for (auto& column : m_columns) {
+            column.push_back(nullptr);
+        }
+        assert(check());
+    }
+
+    void* get_component(Entity entity, const refl::Type& component) {
+        assert(has_component(component));
+        assert(has_entity(entity));
+        auto row = m_entity_row[entity];
+        auto component_index =
+            std::find(m_components.begin(), m_components.end(), &component) -
+            m_components.begin();
+        assert(check());
+        return m_columns[component_index].get(row);
+    }
+
+    void set_component(
+        Entity entity,
+        const refl::Type& component,
+        const void* data
+    ) {
+        assert(has_component(component));
+        assert(has_entity(entity));
+        auto row = m_entity_row[entity];
+        auto component_index =
+            std::find(m_components.begin(), m_components.end(), &component) -
+            m_components.begin();
+        m_columns[component_index].set(row, data);
+        assert(check());
+    }
+
+    void remove_entity(Entity entity) {
+        // if (m_id == 11)
+        //     log::trace("Archetype {} removing entity {}", m_id, entity);
+        assert(has_entity(entity));
+        auto row = m_entity_row[entity];
+        for (auto& column : m_columns) {
+            column.remove(row);
+        }
+        m_entity_row.erase(entity);
+        if (row == m_entities.size() - 1) {
+            m_entities.pop_back();
+        } else {
+            Entity last_entity = m_entities.back();
+            m_entity_row[last_entity] = row;
+            m_entities[row] = last_entity;
+            m_entities.pop_back();
+        }
+        assert(check());
+    }
+
+    const ComponentVector& components() const { return m_components; }
+
+    const std::vector<Entity>& entities() const { return m_entities; }
+
+    std::size_t hash() const { return TypeVectorHasher {}(m_components); }
+
+    ArchetypeId id() const { return m_id; }
+
+  private:
     ArchetypeId m_id;
     ComponentVector m_components;
     std::vector<Column> m_columns;
-    std::unordered_map<ComponentId, Edge> m_edges;
     std::vector<Entity> m_entities;
-
-    std::size_t size() const {
-        if (m_columns.empty())
-            return 0;
-        else
-            return m_columns[0].m_count;
-    }
-
-    void remove(std::size_t row) {
-        m_entities[row] = m_entities.back();
-        m_entities.pop_back();
-    }
-
-    std::size_t hash() const { return TypeVectorHasher {}(m_components); }
+    std::unordered_map<Entity, std::size_t> m_entity_row;
 };
 
 } // namespace triple::ecs

@@ -1,0 +1,64 @@
+module;
+#include "refl_macros.hpp"
+
+export module types;
+import triple.all;
+
+using namespace triple;
+
+export struct BoxCollider {
+    Vector2 size;
+    Vector2 offset;
+    inline Rect rect_global(const Transform2D& transform) const {
+        auto center = transform.position;
+        auto size_scaled = size * transform.scale;
+        return Rect {
+            .min = center + offset - size_scaled / 2.0f,
+            .max = center + offset + size_scaled / 2.0f,
+        };
+    }
+};
+REFL(BoxCollider)
+
+export struct CollideEvent {
+    Entity entity_a;
+    Entity entity_b;
+};
+REFL(CollideEvent)
+
+export struct Player {
+    float shoot_cooldown;
+    float shoot_timer;
+    float speed;
+};
+REFL(Player)
+
+export struct Enemy {
+    float speed;
+};
+REFL(Enemy)
+
+export struct Bullet {
+    float speed;
+};
+REFL(Bullet)
+
+export struct Game {
+    float enemy_spawn_timer {0.0f};
+};
+REFL(Game)
+
+export void register_types() {
+    Cls::new_cls<BoxCollider>()
+        .add_member("size", &BoxCollider::size)
+        .add_member("offset", &BoxCollider::offset);
+    Cls::new_cls<CollideEvent>()
+        .add_member("entity_a", &CollideEvent::entity_a)
+        .add_member("entity_b", &CollideEvent::entity_b);
+    Cls::new_cls<Player>()
+        .add_member("shoot_cooldown", &Player::shoot_cooldown)
+        .add_member("shoot_timer", &Player::shoot_timer)
+        .add_member("speed", &Player::speed);
+    Cls::new_cls<Enemy>().add_member("speed", &Enemy::speed);
+    Cls::new_cls<Bullet>().add_member("speed", &Bullet::speed);
+}

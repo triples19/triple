@@ -63,7 +63,7 @@ void update_should_close(
 export class WindowPlugin : public app::Plugin {
   public:
     void setup(app::App& app) {
-        int width = 1280, height = 720;
+        int width = 1920, height = 1080;
         app.add_resource(Window {
             .glfw_window = setup_glfw(width, height, "Triple Engine"),
             .width = width,
