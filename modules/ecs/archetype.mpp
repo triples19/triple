@@ -69,15 +69,13 @@ export struct Column {
 };
 
 export struct Archetype {
-    struct Edge {
-        Archetype *m_add, *m_remove;
-    };
-    std::unordered_map<ComponentId, Edge> m_edges;
+    friend class World;
 
     Archetype(ArchetypeId id, const ComponentVector& components) :
         m_id(id), m_components(components) {
         std::ranges::sort(m_components);
         for (const auto& component : m_components) {
+            m_component_column[component->id()] = m_columns.size();
             m_columns.emplace_back(component->size());
         }
         assert(m_entity_row.size() == m_entities.size());
@@ -89,18 +87,6 @@ export struct Archetype {
         return m_entity_row.find(entity) != m_entity_row.end();
     }
 
-    bool check() const {
-        if (m_entities.size() != m_entity_row.size()) {
-            return false;
-        }
-        for (auto entity : m_entities) {
-            if (m_entity_row.find(entity) == m_entity_row.end()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     bool has_component(const refl::Type& component) const {
         return std::find(
                    m_components.begin(),
@@ -108,26 +94,26 @@ export struct Archetype {
                    &component
                ) != m_components.end();
     }
+    template<class C>
+    bool has_component() const {
+        return has_component(refl::type<C>());
+    }
 
     void add_entity(Entity entity) {
-        assert(!has_entity(entity));
         m_entity_row[entity] = m_entities.size();
         m_entities.push_back(entity);
         for (auto& column : m_columns) {
             column.push_back(nullptr);
         }
-        assert(check());
     }
 
     void* get_component(Entity entity, const refl::Type& component) {
-        assert(has_component(component));
-        assert(has_entity(entity));
         auto row = m_entity_row[entity];
-        auto component_index =
-            std::find(m_components.begin(), m_components.end(), &component) -
-            m_components.begin();
-        assert(check());
-        return m_columns[component_index].get(row);
+        return m_columns[m_component_column[component.id()]].get(row);
+    }
+
+    void* get_component(size_t column, size_t row) {
+        return m_columns[column].get(row);
     }
 
     void set_component(
@@ -135,20 +121,14 @@ export struct Archetype {
         const refl::Type& component,
         const void* data
     ) {
-        assert(has_component(component));
-        assert(has_entity(entity));
         auto row = m_entity_row[entity];
         auto component_index =
             std::find(m_components.begin(), m_components.end(), &component) -
             m_components.begin();
         m_columns[component_index].set(row, data);
-        assert(check());
     }
 
     void remove_entity(Entity entity) {
-        // if (m_id == 11)
-        //     log::trace("Archetype {} removing entity {}", m_id, entity);
-        assert(has_entity(entity));
         auto row = m_entity_row[entity];
         for (auto& column : m_columns) {
             column.remove(row);
@@ -162,15 +142,15 @@ export struct Archetype {
             m_entities[row] = last_entity;
             m_entities.pop_back();
         }
-        assert(check());
+    }
+
+    std::size_t get_column_index(const refl::Type& component) const {
+        return m_component_column.at(component.id());
     }
 
     const ComponentVector& components() const { return m_components; }
-
     const std::vector<Entity>& entities() const { return m_entities; }
-
     std::size_t hash() const { return TypeVectorHasher {}(m_components); }
-
     ArchetypeId id() const { return m_id; }
 
   private:
@@ -179,6 +159,11 @@ export struct Archetype {
     std::vector<Column> m_columns;
     std::vector<Entity> m_entities;
     std::unordered_map<Entity, std::size_t> m_entity_row;
+    std::unordered_map<refl::TypeId, std::size_t> m_component_column;
+    struct Edge {
+        Archetype *m_add, *m_remove;
+    };
+    std::unordered_map<ComponentId, Edge> m_edges;
 };
 
 } // namespace triple::ecs

@@ -1,5 +1,6 @@
 module;
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
@@ -118,34 +119,31 @@ class Query {
 
         Iterator(Query* q, size_t archetype_index, size_t entity_index) :
             m_query(q), m_archetype_index(archetype_index),
-            m_entity_index(entity_index) {}
+            m_entity_index(entity_index) {
+            update_column_map();
+        }
 
         template<class T>
         T& get() const {
-            const auto& type = refl::type<T>();
-            Archetype* archetype = m_query->matched()[m_archetype_index];
-            Entity entity = archetype->entities()[m_entity_index];
-            return *static_cast<T*>(archetype->get_component(entity, type));
+            size_t column = m_column_map[index_in_args<T, Args...>()];
+            return *static_cast<T*>(
+                archetype().get_component(column, m_entity_index)
+            );
         }
 
-        Entity entity() const {
-            return m_query->matched()[m_archetype_index]->entities(
-            )[m_entity_index];
-        }
+        Entity entity() const { return archetype().entities()[m_entity_index]; }
 
         value_type operator*() { return {get<Args>()...}; }
 
         Iterator& operator++() {
             m_entity_index++;
-            if (m_entity_index ==
-                m_query->matched()[m_archetype_index]->size()) {
+            while (m_entity_index == archetype().size()) {
                 m_entity_index = 0;
                 m_archetype_index++;
+                if (m_archetype_index == m_query->matched().size())
+                    return *this;
             }
-            while (m_archetype_index < m_query->matched().size() &&
-                   m_query->matched()[m_archetype_index]->size() == 0) {
-                m_archetype_index++;
-            }
+            update_column_map();
             return *this;
         }
 
@@ -158,10 +156,21 @@ class Query {
 
         bool operator!=(Iterator& other) const { return !(*this == other); }
 
+        Archetype& archetype() const {
+            return *m_query->matched()[m_archetype_index];
+        }
+
       private:
+        void update_column_map() {
+            if (m_archetype_index != m_query->matched().size())
+                m_column_map = {archetype().get_column_index(refl::type<Args>()
+                )...};
+        }
+
         Query* m_query;
         size_t m_archetype_index;
         size_t m_entity_index;
+        std::array<size_t, sizeof...(Args)> m_column_map;
     };
 
     Query(GenericQuery& q) : m_query(q) {

@@ -3,16 +3,75 @@
 #include <cassert>
 #include <filesystem>
 #include <unordered_set>
+
 import triple.all;
+import samples.ui;
+import samples.common;
+
 using namespace triple;
-import ui;
-import types;
 
 constexpr float player_speed = 800.0f;
 constexpr float player_shoot_cooldown = 0.5f;
 constexpr float enemy_speed = 400.0f;
 constexpr float bullet_speed = 1000.0f;
 constexpr float enemy_spawn_cooldown = 1.0f;
+
+struct BoxCollider {
+    Vector2 size;
+    Vector2 offset;
+    inline Rect rect_global(const Transform2D& transform) const {
+        auto center = transform.position;
+        auto size_scaled = size * transform.scale;
+        return Rect {
+            .min = center + offset - size_scaled / 2.0f,
+            .max = center + offset + size_scaled / 2.0f,
+        };
+    }
+};
+REFL(BoxCollider)
+
+struct CollideEvent {
+    Entity entity_a;
+    Entity entity_b;
+};
+REFL(CollideEvent)
+
+struct Player {
+    float shoot_cooldown;
+    float shoot_timer;
+    float speed;
+};
+REFL(Player)
+
+struct Enemy {
+    float speed;
+};
+REFL(Enemy)
+
+struct Bullet {
+    float speed;
+};
+REFL(Bullet)
+
+struct Game {
+    float enemy_spawn_timer {0.0f};
+};
+REFL(Game)
+
+void register_types() {
+    Cls::new_cls<BoxCollider>()
+        .add_member("size", &BoxCollider::size)
+        .add_member("offset", &BoxCollider::offset);
+    Cls::new_cls<CollideEvent>()
+        .add_member("entity_a", &CollideEvent::entity_a)
+        .add_member("entity_b", &CollideEvent::entity_b);
+    Cls::new_cls<Player>()
+        .add_member("shoot_cooldown", &Player::shoot_cooldown)
+        .add_member("shoot_timer", &Player::shoot_timer)
+        .add_member("speed", &Player::speed);
+    Cls::new_cls<Enemy>().add_member("speed", &Enemy::speed);
+    Cls::new_cls<Bullet>().add_member("speed", &Bullet::speed);
+}
 
 int random(int min, int max) {
     static bool first = true;
@@ -243,15 +302,21 @@ void move_enemy(
     }
 }
 
+void pause_system(Resource<KeyInput> key_input, Resource<Time> time) {
+    if (key_input->just_pressed(KeyCode::P)) {
+        if (time->time_scale == 0.0f) {
+            time->time_scale = 1.0f;
+        } else {
+            time->time_scale = 0.0f;
+        }
+    }
+}
+
 int main() {
+    register_types();
     App app;
-    app.add_plugin<AssetPlugin>();
-    AssetServer& asset_server = app.get_resource<AssetServer>().get();
-    auto assets_dir =
-        std::filesystem::current_path().parent_path().parent_path() / "game" /
-        "assets";
-    asset_server.set_assets_dir(assets_dir);
-    app.add_plugin<TimePlugin>()
+    app.add_plugin<SamplesPlugin>()
+        .add_plugin<TimePlugin>()
         .add_plugin<WindowPlugin>()
         .add_plugin<InputPlugin>()
         .add_plugin<OpenGLPlugin>()
@@ -270,5 +335,6 @@ int main() {
         .add_system(Update, move_bullet)
         .add_system(Update, spawn_enemy)
         .add_system(Update, move_enemy)
+        .add_system(Update, pause_system)
         .run();
 }

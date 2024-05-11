@@ -1,4 +1,5 @@
-#include "common.hpp"
+import triple.all;
+import samples.common;
 
 void print_input(ecs::Resource<KeyInput> input) {
     for (KeyCode key : c_key_codes) {

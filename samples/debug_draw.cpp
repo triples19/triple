@@ -1,4 +1,5 @@
-#include "common.hpp"
+import triple.all;
+import samples.common;
 
 int main() {
     App app;

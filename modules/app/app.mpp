@@ -4,7 +4,6 @@ module;
 export module triple.app:app;
 import triple.refl;
 import triple.ecs;
-import triple.base;
 import :plugin;
 
 namespace triple::app {

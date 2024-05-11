@@ -1,6 +1,0 @@
-target("game")
-    set_kind("binary")
-    add_files("main.cpp", "ui.mpp", "types.mpp")
-    add_deps("triple")
-    add_packages("imgui", "glfw")
-    set_targetdir("$(buildir)/game")

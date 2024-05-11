@@ -1,5 +1,7 @@
-#include "common.hpp"
 #include "debug_macros.hpp"
+
+import triple.all;
+import samples.common;
 
 void setup_scene(
     Commands commands,

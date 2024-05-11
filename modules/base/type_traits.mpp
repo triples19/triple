@@ -1,4 +1,5 @@
 module;
+#include <array>
 #include <type_traits>
 
 export module triple.base:type_traits;
@@ -13,5 +14,13 @@ struct is_specialization_impl<Template<Args...>, Template> : std::true_type {};
 
 export template<class T, template<class...> class Template>
 concept is_specialization = is_specialization_impl<T, Template>::value;
+
+export template<class T, typename... Ts>
+constexpr std::size_t index_in_args() {
+    constexpr std::array<bool, sizeof...(Ts)> a {{std::is_same<T, Ts>::value...}
+    };
+    const auto it = std::find(a.begin(), a.end(), true);
+    return std::distance(a.begin(), it);
+}
 
 } // namespace triple

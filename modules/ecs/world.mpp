@@ -1,11 +1,13 @@
 module;
+
+#include <unordered_map>
+
 #include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
-#include <unordered_map>
 
 export module triple.ecs:world;
 import triple.refl;
@@ -319,14 +321,14 @@ export class World {
     // std::unordered_map So I'm using std::map instead for now "fatal error
     // C1001: Internal compiler error. (compiler file 'msc1.cpp', line 1587)"
 
-    std::map<Entity, Archetype*> m_entity_archetype;
+    std::map<std::size_t, Archetype*> m_entity_archetype;
     // std::map<std::size_t, EntityRecord> m_entity_index;
     std::map<std::size_t, Archetype*> m_archetype_map;
     std::map<std::size_t, GenericQuery*> m_queries;
-    std::map<SystemId, System*> m_systems;
-    std::map<refl::TypeId, std::unique_ptr<Events>> m_events;
-    std::map<refl::TypeId, refl::Value> m_resources;
-    std::map<ScheduleId, std::unique_ptr<Schedule>> m_schedules;
+    std::map<std::size_t, System*> m_systems;
+    std::map<std::size_t, std::unique_ptr<Events>> m_events;
+    std::map<std::size_t, refl::Value> m_resources;
+    std::map<std::size_t, std::unique_ptr<Schedule>> m_schedules;
     std::vector<std::function<void(World&)>> m_commands;
 };
 

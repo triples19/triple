@@ -2,7 +2,10 @@ module;
 #include <cstdint>
 #include <tuple>
 
+#include "refl_macros.hpp"
+
 export module triple.math:color;
+import triple.refl;
 
 namespace triple::math {
 
@@ -21,7 +24,8 @@ export struct Color4B {
     uint8_t r {0}, g {0}, b {0}, a {0};
 
     Color4B() = default;
-    Color4B(uint8_t r, uint8_t g, uint8_t b, uint8_t a) : r {r}, g {g}, b {b}, a {a} {}
+    Color4B(uint8_t r, uint8_t g, uint8_t b, uint8_t a) :
+        r {r}, g {g}, b {b}, a {a} {}
 };
 
 export struct Color4F {
@@ -30,9 +34,12 @@ export struct Color4F {
     Color4F() = default;
     Color4F(float r, float g, float b, float a) : r {r}, g {g}, b {b}, a {a} {}
     Color4F(const Color4B& color) :
-        r {color.a / 255.0f}, g {color.g / 255.0f}, b {color.b / 255.0f}, a {color.a / 255.0f} {}
+        r {color.a / 255.0f}, g {color.g / 255.0f}, b {color.b / 255.0f},
+        a {color.a / 255.0f} {}
 
-    std::tuple<float, float, float, float> values() const { return {r, g, b, a}; }
+    std::tuple<float, float, float, float> values() const {
+        return {r, g, b, a};
+    }
 
     static const Color4F White;
     static const Color4F Yellow;
@@ -56,3 +63,5 @@ const Color4F Color4F::Orange {1, 0.5f, 0, 1};
 const Color4F Color4F::Gray {0.65f, 0.65f, 0.65f, 1};
 
 } // namespace triple::math
+
+REFL(triple::math::Color4F)

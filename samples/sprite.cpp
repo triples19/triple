@@ -1,6 +1,8 @@
-#include "common.hpp"
+import triple.all;
+import samples.common;
 
 int main() {
+    using namespace triple;
     App app;
     app.add_plugin<SamplesPlugin>()
         .add_plugin<WindowPlugin>()

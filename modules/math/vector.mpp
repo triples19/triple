@@ -2,7 +2,10 @@ module;
 #include <algorithm>
 #include <cmath>
 
+#include "refl_macros.hpp"
+
 export module triple.math:vector;
+import triple.refl;
 import :common;
 
 export namespace triple::math {
@@ -516,3 +519,7 @@ Vector4::Vector4(const Vector3& v3, float w) :
     x {v3.x}, y {v3.y}, z {v3.z}, w {w} {}
 
 } // namespace triple::math
+
+REFL(triple::math::Vector2)
+REFL(triple::math::Vector3)
+REFL(triple::math::Vector4)

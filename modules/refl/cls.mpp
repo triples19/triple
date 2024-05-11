@@ -41,6 +41,10 @@ export class Cls {
         return *m_members[name];
     }
 
+    const std::unordered_map<std::string, Member*>& members() const {
+        return m_members;
+    }
+
   private:
     const Type& m_type;
     std::unordered_map<std::string, Member*> m_members;
@@ -51,6 +55,14 @@ std::unordered_map<TypeId, Cls> Cls::s_classes {};
 export template<class T>
 Cls& cls() {
     auto iter = Cls::s_classes.find(type<T>().id());
+    return iter->second;
+}
+
+export Cls& cls(const Type& type) {
+    auto iter = Cls::s_classes.find(type.id());
+    if (iter == Cls::s_classes.end()) {
+        log::fatal("Class not found: {}", type.name());
+    }
     return iter->second;
 }
 

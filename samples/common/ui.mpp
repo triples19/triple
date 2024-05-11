@@ -1,0 +1,148 @@
+module;
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+#include <GLFW/glfw3.h>
+
+#include <format>
+#include <string>
+#include <unordered_set>
+
+export module samples.ui;
+import triple.all;
+using namespace triple;
+
+void setup_imgui(Resource<Window> win) {
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    io.Fonts->AddFontFromFileTTF(
+        "../../samples/assets/Cousine-Regular.ttf",
+        20
+    );
+    io.Fonts->AddFontFromFileTTF(
+        "../../samples/assets/Cousine-Regular.ttf",
+        16
+    );
+    io.Fonts->AddFontFromFileTTF(
+        "../../samples/assets/Cousine-Regular.ttf",
+        14
+    );
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplGlfw_InitForOpenGL(win->glfw_window, true);
+    ImGui_ImplOpenGL3_Init("#version 130");
+}
+
+std::string get_components_name(const ComponentVector& components) {
+    using namespace std::string_literals;
+    std::string name = "";
+    for (auto* component : components) {
+        name += component->name() + ", "s;
+    }
+    return name;
+}
+
+void update_imgui(Commands commands, Resource<Time> time) {
+    ImGui_ImplOpenGL3_NewFrame();
+    ImGui_ImplGlfw_NewFrame();
+    ImGui::NewFrame();
+
+    // ImGui::ShowDemoWindow();
+
+    {
+        ImGui::Begin("Archetypes");
+        ImGui::Text(std::format("{}", 1.0f / time->delta()).c_str());
+
+        World& world = commands.world();
+        std::unordered_set<Archetype*> archetypes;
+        for (Archetype* archetype : world.archetypes()) {
+            if (archetype->size() == 0 && !archetypes.contains(archetype))
+                continue;
+            archetypes.insert(archetype);
+            if (!ImGui::CollapsingHeader(
+                    get_components_name(archetype->components()).c_str()
+                ))
+                continue;
+            std::string name = std::format("Archetype {}", archetype->id());
+            ImGuiTableFlags flags =
+                ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg |
+                ImGuiTableFlags_Resizable | ImGuiTableFlags_SizingFixedFit |
+                ImGuiTableFlags_NoHostExtendX;
+            if (ImGui::BeginTable(
+                    name.c_str(),
+                    archetype->components().size() + 1,
+                    flags
+                )) {
+                ImGui::TableSetupColumn("ID");
+                for (auto* component : archetype->components()) {
+                    std::string header = std::format(
+                        "{} (size={})",
+                        component->name(),
+                        component->size()
+                    );
+                    ImGui::TableSetupColumn(header.c_str());
+                }
+                ImGui::TableHeadersRow();
+
+                for (Entity entity : archetype->entities()) {
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    ImGui::Text(std::format("{}", entity).c_str());
+                    for (auto* component_type : archetype->components()) {
+                        ImGui::TableNextColumn();
+                        std::string info;
+                        void* addr =
+                            archetype->get_component(entity, *component_type);
+                        Ref comp {addr, *component_type};
+                        info += std::format("addr = {}", (size_t)addr);
+                        Cls& c = cls(*component_type);
+                        for (auto& [name, member] : c.members()) {
+                            const Type& t = member->type();
+                            Ref val = member->get(comp);
+                            std::string str = "()";
+                            if (t.is(type<int>()))
+                                str = std::to_string(val.value<int>());
+                            else if (t.is(type<float>()))
+                                str = std::to_string((int)val.value<float>());
+                            else if (t.is(type<Vector2>()))
+                                str = std::format(
+                                    "{:.1f}, {:.1f}",
+                                    val.value<Vector2>().x,
+                                    val.value<Vector2>().y
+                                );
+                            else if (t.is(type<Color4F>()))
+                                str = std::format(
+                                    "{}, {}, {}, {}",
+                                    val.value<Color4F>().r,
+                                    val.value<Color4F>().g,
+                                    val.value<Color4F>().b,
+                                    val.value<Color4F>().a
+                                );
+                            info += std::format("\n{} = {}", name, str);
+                        }
+                        ImGui::Text(info.c_str());
+                    }
+                }
+                ImGui::EndTable();
+            }
+        }
+
+        ImGui::End();
+    }
+
+    ImGui::Render();
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+export class UiPlugin : public Plugin {
+  public:
+    void setup(App& app) {
+        app.add_system(StartUp, setup_imgui)
+            .add_system(RenderUpdate, update_imgui);
+    }
+};

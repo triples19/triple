@@ -1,0 +1,31 @@
+module;
+#include <filesystem>
+
+export module samples.common;
+import triple.all;
+
+using namespace triple;
+
+export class SamplesPlugin : public Plugin {
+  public:
+    void setup(App& app) {
+        Cls::new_cls<Transform2D>()
+            .add_member("position", &Transform2D::position)
+            .add_member("scale", &Transform2D::scale);
+        Cls::new_cls<Camera>()
+            .add_member("width", &Camera::width)
+            .add_member("height", &Camera::height)
+            .add_member("near", &Camera::near)
+            .add_member("far", &Camera::far);
+        Cls::new_cls<Sprite>()
+            .add_member("color", &Sprite::color)
+            .add_member("anchor", &Sprite::anchor);
+
+        app.add_plugin<AssetPlugin>();
+        AssetServer& asset_server = app.get_resource<AssetServer>().get();
+        auto assets_dir =
+            std::filesystem::current_path().parent_path().parent_path() /
+            "samples" / "assets";
+        asset_server.set_assets_dir(assets_dir);
+    }
+};
