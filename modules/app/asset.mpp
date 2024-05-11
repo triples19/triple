@@ -1,4 +1,5 @@
 module;
+#include "refl_macros.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <format>
@@ -37,6 +38,7 @@ class Handle : public GenericHandle {
 
 export class GenericAssetLoader {
   public:
+    virtual ~GenericAssetLoader() = default;
     virtual const refl::Type& type() = 0;
     virtual void* load(const std::filesystem::path& path) = 0;
     virtual void unload(void*) = 0;
@@ -76,7 +78,7 @@ export class GenericAssets {
 export template<class T>
 class Assets {
   public:
-    Assets(const GenericAssets& assets) : m_assets(&assets) {}
+    Assets(GenericAssets& assets) : m_assets(&assets) {}
 
     T& get(Handle<T> handle) { return m_assets->get(handle).value<T>(); }
 
@@ -160,3 +162,5 @@ export class AssetPlugin : public app::Plugin {
 };
 
 } // namespace triple::app
+
+REFL(triple::app::AssetServer)

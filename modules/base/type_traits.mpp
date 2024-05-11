@@ -16,7 +16,7 @@ export template<class T, template<class...> class Template>
 concept is_specialization = is_specialization_impl<T, Template>::value;
 
 export template<class T, typename... Ts>
-constexpr std::size_t index_in_args() {
+consteval std::size_t index_in_args() {
     constexpr std::array<bool, sizeof...(Ts)> a {{std::is_same<T, Ts>::value...}
     };
     const auto it = std::find(a.begin(), a.end(), true);

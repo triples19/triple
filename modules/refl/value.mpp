@@ -10,6 +10,7 @@ namespace triple::refl {
 export class Value;
 
 export struct ValueHandlerBase {
+    virtual ~ValueHandlerBase() = default;
     virtual Ref ref(const Value& val) const = 0;
     virtual void create(Value& val, Ref ref) const = 0;
     virtual void destroy(Value& val) const = 0;
@@ -89,43 +90,67 @@ export class Value {
 
 export template<class T>
 struct ValueHandlerHeap : public ValueHandlerBase {
-    virtual Ref ref(const Value& val) const override { return Ref(static_cast<const T*>(val.m_storage.get_ptr())); }
-    virtual void create(Value& val, Ref ref) const override { val.m_storage.set_ptr(new T(ref.value<T>())); }
-    virtual void destroy(Value& val) const override { delete static_cast<T*>(val.m_storage.get_ptr()); }
+    virtual Ref ref(const Value& val) const override {
+        return Ref(static_cast<const T*>(val.m_storage.get_ptr()));
+    }
+    virtual void create(Value& val, Ref ref) const override {
+        val.m_storage.set_ptr(new T(ref.value<T>()));
+    }
+    virtual void destroy(Value& val) const override {
+        delete static_cast<T*>(val.m_storage.get_ptr());
+    }
     virtual void copy(Value& val, const Value& other) const override {
         create(val, ref(other));
         val.m_handler = std::make_unique<ValueHandlerHeap<T>>();
     }
-    virtual void move(Value& val, Value& other) const override { val.swap(other); }
+    virtual void move(Value& val, Value& other) const override {
+        val.swap(other);
+    }
     virtual bool empty() const override { return false; }
 };
 
 export template<class T>
 struct ValueHandlerStack : public ValueHandlerBase {
-    virtual Ref ref(const Value& val) const override { return Ref(static_cast<const T*>((void*)&val.m_storage)); }
-    virtual void create(Value& val, Ref ref) const override { new ((void*)&val.m_storage) T(ref.value<T>()); }
-    virtual void destroy(Value& val) const override { static_cast<T*>((void*)&val.m_storage)->~T(); }
+    virtual Ref ref(const Value& val) const override {
+        return Ref(static_cast<const T*>((void*)&val.m_storage));
+    }
+    virtual void create(Value& val, Ref ref) const override {
+        new ((void*)&val.m_storage) T(ref.value<T>());
+    }
+    virtual void destroy(Value& val) const override {
+        static_cast<T*>((void*)&val.m_storage)->~T();
+    }
     virtual void copy(Value& val, const Value& other) const override {
         create(val, ref(other));
         val.m_handler = std::make_unique<ValueHandlerStack<T>>();
     }
-    virtual void move(Value& val, Value& other) const override { val.swap(other); }
+    virtual void move(Value& val, Value& other) const override {
+        val.swap(other);
+    }
     virtual bool empty() const override { return false; }
 };
 
 // std::unique_ptr<T>
 export template<class T>
 struct ValueHandlerUniquePtr : public ValueHandlerBase {
-    virtual Ref ref(const Value& val) const override { return Ref(static_cast<const T*>((void*)&val.m_storage)); }
+    virtual Ref ref(const Value& val) const override {
+        return Ref(static_cast<const T*>((void*)&val.m_storage));
+    }
     virtual void create(Value& val, Ref ref) const override {
-        new ((void*)&val.m_storage) std::unique_ptr<T>(std::move(ref.value<std::unique_ptr<T>>()));
+        new ((void*)&val.m_storage)
+            std::unique_ptr<T>(std::move(ref.value<std::unique_ptr<T>>()));
     }
     virtual void destroy(Value& val) const override {
-        std::unique_ptr<T>& ptr = *static_cast<std::unique_ptr<T>*>((void*)&val.m_storage);
+        std::unique_ptr<T>& ptr =
+            *static_cast<std::unique_ptr<T>*>((void*)&val.m_storage);
         ptr.reset();
     }
-    virtual void copy(Value& val, const Value& other) const override { assert(false); }
-    virtual void move(Value& val, Value& other) const override { val.swap(other); }
+    virtual void copy(Value& val, const Value& other) const override {
+        assert(false);
+    }
+    virtual void move(Value& val, Value& other) const override {
+        val.swap(other);
+    }
     virtual bool empty() const override { return false; }
 };
 

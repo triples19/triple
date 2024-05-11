@@ -5,6 +5,7 @@ module;
 export module triple.core:time;
 import triple.app;
 import triple.ecs;
+import triple.refl;
 
 namespace triple::core {
 

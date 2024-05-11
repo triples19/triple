@@ -6,9 +6,9 @@ export module triple.math:matrix;
 import :common;
 import :vector;
 
-export namespace triple::math {
+namespace triple::math {
 
-class Matrix3x3 {
+export class Matrix3x3 {
   public:
     float mat[3][3];
 
@@ -72,7 +72,9 @@ class Matrix3x3 {
 
     const float* data() const { return &mat[0][0]; }
 
-    float* operator[](size_t row_index) const { return const_cast<float*>(mat[row_index]); }
+    float* operator[](size_t row_index) const {
+        return const_cast<float*>(mat[row_index]);
+    }
 
     Vector3 get_column(size_t i_col) const {
         assert(0 <= i_col && i_col < 3);
@@ -100,7 +102,8 @@ class Matrix3x3 {
         Matrix3x3 sum;
         for (size_t row_index = 0; row_index < 3; row_index++) {
             for (size_t col_index = 0; col_index < 3; col_index++) {
-                sum.mat[row_index][col_index] = mat[row_index][col_index] + rhs.mat[row_index][col_index];
+                sum.mat[row_index][col_index] =
+                    mat[row_index][col_index] + rhs.mat[row_index][col_index];
             }
         }
         return sum;
@@ -110,7 +113,8 @@ class Matrix3x3 {
         Matrix3x3 diff;
         for (size_t row_index = 0; row_index < 3; row_index++) {
             for (size_t col_index = 0; col_index < 3; col_index++) {
-                diff.mat[row_index][col_index] = mat[row_index][col_index] - rhs.mat[row_index][col_index];
+                diff.mat[row_index][col_index] =
+                    mat[row_index][col_index] - rhs.mat[row_index][col_index];
             }
         }
         return diff;
@@ -120,9 +124,10 @@ class Matrix3x3 {
         Matrix3x3 prod;
         for (size_t row_index = 0; row_index < 3; row_index++) {
             for (size_t col_index = 0; col_index < 3; col_index++) {
-                prod.mat[row_index][col_index] = mat[row_index][0] * rhs.mat[0][col_index] +
-                                                 mat[row_index][1] * rhs.mat[1][col_index] +
-                                                 mat[row_index][2] * rhs.mat[2][col_index];
+                prod.mat[row_index][col_index] =
+                    mat[row_index][0] * rhs.mat[0][col_index] +
+                    mat[row_index][1] * rhs.mat[1][col_index] +
+                    mat[row_index][2] * rhs.mat[2][col_index];
             }
         }
         return prod;
@@ -132,7 +137,9 @@ class Matrix3x3 {
     Vector3 operator*(const Vector3& rhs) const {
         Vector3 prod;
         for (size_t row_index = 0; row_index < 3; row_index++) {
-            prod[row_index] = mat[row_index][0] * rhs.x + mat[row_index][1] * rhs.y + mat[row_index][2] * rhs.z;
+            prod[row_index] = mat[row_index][0] * rhs.x +
+                              mat[row_index][1] * rhs.y +
+                              mat[row_index][2] * rhs.z;
         }
         return prod;
     }
@@ -141,8 +148,9 @@ class Matrix3x3 {
     friend Vector3 operator*(const Vector3& point, const Matrix3x3& rhs) {
         Vector3 prod;
         for (size_t row_index = 0; row_index < 3; row_index++) {
-            prod[row_index] =
-                point.x * rhs.mat[0][row_index] + point.y * rhs.mat[1][row_index] + point.z * rhs.mat[2][row_index];
+            prod[row_index] = point.x * rhs.mat[0][row_index] +
+                              point.y * rhs.mat[1][row_index] +
+                              point.z * rhs.mat[2][row_index];
         }
         return prod;
     }
@@ -171,7 +179,8 @@ class Matrix3x3 {
         Matrix3x3 prod;
         for (size_t row_index = 0; row_index < 3; row_index++) {
             for (size_t col_index = 0; col_index < 3; col_index++)
-                prod[row_index][col_index] = scalar * rhs.mat[row_index][col_index];
+                prod[row_index][col_index] =
+                    scalar * rhs.mat[row_index][col_index];
         }
         return prod;
     }
@@ -191,7 +200,8 @@ class Matrix3x3 {
         float cofactor10 = mat[1][2] * mat[2][0] - mat[1][0] * mat[2][2];
         float cofactor20 = mat[1][0] * mat[2][1] - mat[1][1] * mat[2][0];
 
-        float det = mat[0][0] * cofactor00 + mat[0][1] * cofactor10 + mat[0][2] * cofactor20;
+        float det = mat[0][0] * cofactor00 + mat[0][1] * cofactor10 +
+                    mat[0][2] * cofactor20;
 
         return det;
     }
@@ -288,7 +298,12 @@ export class Matrix4x4 {
         mat[3][3] = m33;
     }
 
-    Matrix4x4(const Vector4& row0, const Vector4& row1, const Vector4& row2, const Vector4& row3) {
+    Matrix4x4(
+        const Vector4& row0,
+        const Vector4& row1,
+        const Vector4& row2,
+        const Vector4& row3
+    ) {
         mat[0][0] = row0.x;
         mat[0][1] = row0.y;
         mat[0][2] = row0.z;
@@ -309,45 +324,47 @@ export class Matrix4x4 {
 
     const float* data() const { return &mat[0][0]; }
 
-    float* operator[](size_t row_index) const { return const_cast<float*>(mat[row_index]); }
+    float* operator[](size_t row_index) const {
+        return const_cast<float*>(mat[row_index]);
+    }
 
     Matrix4x4 concatenate(const Matrix4x4& m2) const {
         Matrix4x4 r;
-        r.mat[0][0] =
-            mat[0][0] * m2.mat[0][0] + mat[0][1] * m2.mat[1][0] + mat[0][2] * m2.mat[2][0] + mat[0][3] * m2.mat[3][0];
-        r.mat[0][1] =
-            mat[0][0] * m2.mat[0][1] + mat[0][1] * m2.mat[1][1] + mat[0][2] * m2.mat[2][1] + mat[0][3] * m2.mat[3][1];
-        r.mat[0][2] =
-            mat[0][0] * m2.mat[0][2] + mat[0][1] * m2.mat[1][2] + mat[0][2] * m2.mat[2][2] + mat[0][3] * m2.mat[3][2];
-        r.mat[0][3] =
-            mat[0][0] * m2.mat[0][3] + mat[0][1] * m2.mat[1][3] + mat[0][2] * m2.mat[2][3] + mat[0][3] * m2.mat[3][3];
+        r.mat[0][0] = mat[0][0] * m2.mat[0][0] + mat[0][1] * m2.mat[1][0] +
+                      mat[0][2] * m2.mat[2][0] + mat[0][3] * m2.mat[3][0];
+        r.mat[0][1] = mat[0][0] * m2.mat[0][1] + mat[0][1] * m2.mat[1][1] +
+                      mat[0][2] * m2.mat[2][1] + mat[0][3] * m2.mat[3][1];
+        r.mat[0][2] = mat[0][0] * m2.mat[0][2] + mat[0][1] * m2.mat[1][2] +
+                      mat[0][2] * m2.mat[2][2] + mat[0][3] * m2.mat[3][2];
+        r.mat[0][3] = mat[0][0] * m2.mat[0][3] + mat[0][1] * m2.mat[1][3] +
+                      mat[0][2] * m2.mat[2][3] + mat[0][3] * m2.mat[3][3];
 
-        r.mat[1][0] =
-            mat[1][0] * m2.mat[0][0] + mat[1][1] * m2.mat[1][0] + mat[1][2] * m2.mat[2][0] + mat[1][3] * m2.mat[3][0];
-        r.mat[1][1] =
-            mat[1][0] * m2.mat[0][1] + mat[1][1] * m2.mat[1][1] + mat[1][2] * m2.mat[2][1] + mat[1][3] * m2.mat[3][1];
-        r.mat[1][2] =
-            mat[1][0] * m2.mat[0][2] + mat[1][1] * m2.mat[1][2] + mat[1][2] * m2.mat[2][2] + mat[1][3] * m2.mat[3][2];
-        r.mat[1][3] =
-            mat[1][0] * m2.mat[0][3] + mat[1][1] * m2.mat[1][3] + mat[1][2] * m2.mat[2][3] + mat[1][3] * m2.mat[3][3];
+        r.mat[1][0] = mat[1][0] * m2.mat[0][0] + mat[1][1] * m2.mat[1][0] +
+                      mat[1][2] * m2.mat[2][0] + mat[1][3] * m2.mat[3][0];
+        r.mat[1][1] = mat[1][0] * m2.mat[0][1] + mat[1][1] * m2.mat[1][1] +
+                      mat[1][2] * m2.mat[2][1] + mat[1][3] * m2.mat[3][1];
+        r.mat[1][2] = mat[1][0] * m2.mat[0][2] + mat[1][1] * m2.mat[1][2] +
+                      mat[1][2] * m2.mat[2][2] + mat[1][3] * m2.mat[3][2];
+        r.mat[1][3] = mat[1][0] * m2.mat[0][3] + mat[1][1] * m2.mat[1][3] +
+                      mat[1][2] * m2.mat[2][3] + mat[1][3] * m2.mat[3][3];
 
-        r.mat[2][0] =
-            mat[2][0] * m2.mat[0][0] + mat[2][1] * m2.mat[1][0] + mat[2][2] * m2.mat[2][0] + mat[2][3] * m2.mat[3][0];
-        r.mat[2][1] =
-            mat[2][0] * m2.mat[0][1] + mat[2][1] * m2.mat[1][1] + mat[2][2] * m2.mat[2][1] + mat[2][3] * m2.mat[3][1];
-        r.mat[2][2] =
-            mat[2][0] * m2.mat[0][2] + mat[2][1] * m2.mat[1][2] + mat[2][2] * m2.mat[2][2] + mat[2][3] * m2.mat[3][2];
-        r.mat[2][3] =
-            mat[2][0] * m2.mat[0][3] + mat[2][1] * m2.mat[1][3] + mat[2][2] * m2.mat[2][3] + mat[2][3] * m2.mat[3][3];
+        r.mat[2][0] = mat[2][0] * m2.mat[0][0] + mat[2][1] * m2.mat[1][0] +
+                      mat[2][2] * m2.mat[2][0] + mat[2][3] * m2.mat[3][0];
+        r.mat[2][1] = mat[2][0] * m2.mat[0][1] + mat[2][1] * m2.mat[1][1] +
+                      mat[2][2] * m2.mat[2][1] + mat[2][3] * m2.mat[3][1];
+        r.mat[2][2] = mat[2][0] * m2.mat[0][2] + mat[2][1] * m2.mat[1][2] +
+                      mat[2][2] * m2.mat[2][2] + mat[2][3] * m2.mat[3][2];
+        r.mat[2][3] = mat[2][0] * m2.mat[0][3] + mat[2][1] * m2.mat[1][3] +
+                      mat[2][2] * m2.mat[2][3] + mat[2][3] * m2.mat[3][3];
 
-        r.mat[3][0] =
-            mat[3][0] * m2.mat[0][0] + mat[3][1] * m2.mat[1][0] + mat[3][2] * m2.mat[2][0] + mat[3][3] * m2.mat[3][0];
-        r.mat[3][1] =
-            mat[3][0] * m2.mat[0][1] + mat[3][1] * m2.mat[1][1] + mat[3][2] * m2.mat[2][1] + mat[3][3] * m2.mat[3][1];
-        r.mat[3][2] =
-            mat[3][0] * m2.mat[0][2] + mat[3][1] * m2.mat[1][2] + mat[3][2] * m2.mat[2][2] + mat[3][3] * m2.mat[3][2];
-        r.mat[3][3] =
-            mat[3][0] * m2.mat[0][3] + mat[3][1] * m2.mat[1][3] + mat[3][2] * m2.mat[2][3] + mat[3][3] * m2.mat[3][3];
+        r.mat[3][0] = mat[3][0] * m2.mat[0][0] + mat[3][1] * m2.mat[1][0] +
+                      mat[3][2] * m2.mat[2][0] + mat[3][3] * m2.mat[3][0];
+        r.mat[3][1] = mat[3][0] * m2.mat[0][1] + mat[3][1] * m2.mat[1][1] +
+                      mat[3][2] * m2.mat[2][1] + mat[3][3] * m2.mat[3][1];
+        r.mat[3][2] = mat[3][0] * m2.mat[0][2] + mat[3][1] * m2.mat[1][2] +
+                      mat[3][2] * m2.mat[2][2] + mat[3][3] * m2.mat[3][2];
+        r.mat[3][3] = mat[3][0] * m2.mat[0][3] + mat[3][1] * m2.mat[1][3] +
+                      mat[3][2] * m2.mat[2][3] + mat[3][3] * m2.mat[3][3];
 
         return r;
     }
@@ -356,10 +373,14 @@ export class Matrix4x4 {
 
     Vector4 operator*(const Vector4& v) const {
         return Vector4(
-            mat[0][0] * v.x + mat[0][1] * v.y + mat[0][2] * v.z + mat[0][3] * v.w,
-            mat[1][0] * v.x + mat[1][1] * v.y + mat[1][2] * v.z + mat[1][3] * v.w,
-            mat[2][0] * v.x + mat[2][1] * v.y + mat[2][2] * v.z + mat[2][3] * v.w,
-            mat[3][0] * v.x + mat[3][1] * v.y + mat[3][2] * v.z + mat[3][3] * v.w
+            mat[0][0] * v.x + mat[0][1] * v.y + mat[0][2] * v.z +
+                mat[0][3] * v.w,
+            mat[1][0] * v.x + mat[1][1] * v.y + mat[1][2] * v.z +
+                mat[1][3] * v.w,
+            mat[2][0] * v.x + mat[2][1] * v.y + mat[2][2] * v.z +
+                mat[2][3] * v.w,
+            mat[3][0] * v.x + mat[3][1] * v.y + mat[3][2] * v.z +
+                mat[3][3] * v.w
         );
     }
 
@@ -436,21 +457,25 @@ export class Matrix4x4 {
     }
 
     bool operator==(const Matrix4x4& m2) const {
-        return mat[0][0] == m2.mat[0][0] && mat[0][1] == m2.mat[0][1] && mat[0][2] == m2.mat[0][2] &&
-               mat[0][3] == m2.mat[0][3] && mat[1][0] == m2.mat[1][0] && mat[1][1] == m2.mat[1][1] &&
-               mat[1][2] == m2.mat[1][2] && mat[1][3] == m2.mat[1][3] && mat[2][0] == m2.mat[2][0] &&
-               mat[2][1] == m2.mat[2][1] && mat[2][2] == m2.mat[2][2] && mat[2][3] == m2.mat[2][3] &&
-               mat[3][0] == m2.mat[3][0] && mat[3][1] == m2.mat[3][1] && mat[3][2] == m2.mat[3][2] &&
-               mat[3][3] == m2.mat[3][3];
+        return mat[0][0] == m2.mat[0][0] && mat[0][1] == m2.mat[0][1] &&
+               mat[0][2] == m2.mat[0][2] && mat[0][3] == m2.mat[0][3] &&
+               mat[1][0] == m2.mat[1][0] && mat[1][1] == m2.mat[1][1] &&
+               mat[1][2] == m2.mat[1][2] && mat[1][3] == m2.mat[1][3] &&
+               mat[2][0] == m2.mat[2][0] && mat[2][1] == m2.mat[2][1] &&
+               mat[2][2] == m2.mat[2][2] && mat[2][3] == m2.mat[2][3] &&
+               mat[3][0] == m2.mat[3][0] && mat[3][1] == m2.mat[3][1] &&
+               mat[3][2] == m2.mat[3][2] && mat[3][3] == m2.mat[3][3];
     }
 
     bool operator!=(const Matrix4x4& m2) const {
-        return mat[0][0] != m2.mat[0][0] || mat[0][1] != m2.mat[0][1] || mat[0][2] != m2.mat[0][2] ||
-               mat[0][3] != m2.mat[0][3] || mat[1][0] != m2.mat[1][0] || mat[1][1] != m2.mat[1][1] ||
-               mat[1][2] != m2.mat[1][2] || mat[1][3] != m2.mat[1][3] || mat[2][0] != m2.mat[2][0] ||
-               mat[2][1] != m2.mat[2][1] || mat[2][2] != m2.mat[2][2] || mat[2][3] != m2.mat[2][3] ||
-               mat[3][0] != m2.mat[3][0] || mat[3][1] != m2.mat[3][1] || mat[3][2] != m2.mat[3][2] ||
-               mat[3][3] != m2.mat[3][3];
+        return mat[0][0] != m2.mat[0][0] || mat[0][1] != m2.mat[0][1] ||
+               mat[0][2] != m2.mat[0][2] || mat[0][3] != m2.mat[0][3] ||
+               mat[1][0] != m2.mat[1][0] || mat[1][1] != m2.mat[1][1] ||
+               mat[1][2] != m2.mat[1][2] || mat[1][3] != m2.mat[1][3] ||
+               mat[2][0] != m2.mat[2][0] || mat[2][1] != m2.mat[2][1] ||
+               mat[2][2] != m2.mat[2][2] || mat[2][3] != m2.mat[2][3] ||
+               mat[3][0] != m2.mat[3][0] || mat[3][1] != m2.mat[3][1] ||
+               mat[3][2] != m2.mat[3][2] || mat[3][3] != m2.mat[3][3];
     }
 
     Matrix4x4 transposed() const {
@@ -474,18 +499,28 @@ export class Matrix4x4 {
         );
     }
 
-    float minor(size_t r0, size_t r1, size_t r2, size_t c0, size_t c1, size_t c2) const {
-        return mat[r0][c0] * (mat[r1][c1] * mat[r2][c2] - mat[r2][c1] * mat[r1][c2]) -
-               mat[r0][c1] * (mat[r1][c0] * mat[r2][c2] - mat[r2][c0] * mat[r1][c2]) +
-               mat[r0][c2] * (mat[r1][c0] * mat[r2][c1] - mat[r2][c0] * mat[r1][c1]);
+    float
+    minor(size_t r0, size_t r1, size_t r2, size_t c0, size_t c1, size_t c2)
+        const {
+        return mat[r0][c0] *
+                   (mat[r1][c1] * mat[r2][c2] - mat[r2][c1] * mat[r1][c2]) -
+               mat[r0][c1] *
+                   (mat[r1][c0] * mat[r2][c2] - mat[r2][c0] * mat[r1][c2]) +
+               mat[r0][c2] *
+                   (mat[r1][c0] * mat[r2][c1] - mat[r2][c0] * mat[r1][c1]);
     }
 
     float determinant() const {
-        return mat[0][0] * minor(1, 2, 3, 1, 2, 3) - mat[0][1] * minor(1, 2, 3, 0, 2, 3) +
-               mat[0][2] * minor(1, 2, 3, 0, 1, 3) - mat[0][3] * minor(1, 2, 3, 0, 1, 2);
+        return mat[0][0] * minor(1, 2, 3, 1, 2, 3) -
+               mat[0][1] * minor(1, 2, 3, 0, 2, 3) +
+               mat[0][2] * minor(1, 2, 3, 0, 1, 3) -
+               mat[0][3] * minor(1, 2, 3, 0, 1, 2);
     }
 
-    bool is_affine() const { return mat[3][0] == 0 && mat[3][1] == 0 && mat[3][2] == 0 && mat[3][3] == 1; }
+    bool is_affine() const {
+        return mat[3][0] == 0 && mat[3][1] == 0 && mat[3][2] == 0 &&
+               mat[3][3] == 1;
+    }
 
     Matrix4x4 inverse_affine() const {
         float m10 = mat[1][0], m11 = mat[1][1], m12 = mat[1][2];
@@ -525,17 +560,43 @@ export class Matrix4x4 {
         float r13 = -(r10 * m03 + r11 * m13 + r12 * m23);
         float r23 = -(r20 * m03 + r21 * m13 + r22 * m23);
 
-        return Matrix4x4(r00, r01, r02, r03, r10, r11, r12, r13, r20, r21, r22, r23, 0, 0, 0, 1);
+        return Matrix4x4(
+            r00,
+            r01,
+            r02,
+            r03,
+            r10,
+            r11,
+            r12,
+            r13,
+            r20,
+            r21,
+            r22,
+            r23,
+            0,
+            0,
+            0,
+            1
+        );
     }
 };
 
 const Matrix3x3 Matrix3x3::Identity {1, 0, 0, 0, 1, 0, 0, 0, 1};
 const Matrix3x3 Matrix3x3::Zero {0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-const Matrix4x4 Matrix4x4::Identity {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
-const Matrix4x4 Matrix4x4::Zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const Matrix4x4
+    Matrix4x4::Identity {1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1};
+const Matrix4x4
+    Matrix4x4::Zero {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-Matrix4x4 orthographic(float left, float right, float top, float bottom, float near, float far) {
+export Matrix4x4 orthographic(
+    float left,
+    float right,
+    float top,
+    float bottom,
+    float near,
+    float far
+) {
     Matrix4x4 m {Matrix4x4::Zero};
     m[0][0] = 2 / (right - left);
     m[0][3] = -(right + left) / (right - left);
@@ -547,7 +608,8 @@ Matrix4x4 orthographic(float left, float right, float top, float bottom, float n
     return m;
 }
 
-Matrix4x4 orthographic(float width, float height, float near, float far) {
+export Matrix4x4
+orthographic(float width, float height, float near, float far) {
     Matrix4x4 m {Matrix4x4::Zero};
     m[0][0] = 2 / width;
     m[1][1] = 2 / height;
@@ -557,7 +619,7 @@ Matrix4x4 orthographic(float width, float height, float near, float far) {
     return m;
 }
 
-Matrix4x4 translate(float x, float y, float z) {
+export Matrix4x4 translate(float x, float y, float z) {
     Matrix4x4 m {Matrix4x4::Identity};
     m[0][3] = x;
     m[1][3] = y;
@@ -565,11 +627,11 @@ Matrix4x4 translate(float x, float y, float z) {
     return m;
 }
 
-Matrix4x4 translate(const Vector3& offset) {
+export Matrix4x4 translate(const Vector3& offset) {
     return translate(offset.x, offset.y, offset.z);
 }
 
-Matrix4x4 scale(float x, float y, float z) {
+export Matrix4x4 scale(float x, float y, float z) {
     Matrix4x4 m {Matrix4x4::Identity};
     m[0][0] = x;
     m[1][1] = y;
@@ -577,11 +639,11 @@ Matrix4x4 scale(float x, float y, float z) {
     return m;
 }
 
-Matrix4x4 scale(const Vector3& scale) {
+export Matrix4x4 scale(const Vector3& scale) {
     return math::scale(scale.x, scale.y, scale.z);
 }
 
-Matrix4x4 rotate_z(float rad) {
+export Matrix4x4 rotate_z(float rad) {
     float cos = math::cos(rad);
     float sin = math::sin(rad);
     Matrix4x4 m {Matrix4x4::Identity};
@@ -592,7 +654,8 @@ Matrix4x4 rotate_z(float rad) {
     return m;
 }
 
-Matrix4x4 look_at(const Vector3& from, const Vector3& to, const Vector3& up) {
+export Matrix4x4
+look_at(const Vector3& from, const Vector3& to, const Vector3& up) {
     Vector3 x, y, z;
     z = (to - from).normalized();
     x = Vector3::cross(up, z).normalized();

@@ -9,9 +9,9 @@ import triple.refl;
 
 namespace triple::math {
 
-struct Color3B;
-struct Color4B;
-struct Color4F;
+export struct Color3B;
+export struct Color4B;
+export struct Color4F;
 
 export struct Color3B {
     uint8_t r {0}, g {0}, b {0};

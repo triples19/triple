@@ -86,13 +86,13 @@ export class System {
         if constexpr (is_specialization<RawT, Query>) {
             add_query(std::to_string(T::hash()), T::components());
         } else if constexpr (is_specialization<RawT, EventReader>) {
-            add_event_reader(refl::type<T::EventType>());
+            add_event_reader(refl::type<typename T::EventType>());
         } else if constexpr (is_specialization<RawT, EventWriter>) {
-            add_event_wrtier(refl::type<T::EventType>());
+            add_event_wrtier(refl::type<typename T::EventType>());
         } else if constexpr (is_specialization<RawT, Resource>) {
-            add_resource(refl::type<T::ResourceType>());
+            add_resource(refl::type<typename T::ResourceType>());
         } else if constexpr (is_specialization<RawT, LocalResource>) {
-            add_local_resource<T::ResourceType>();
+            add_local_resource<typename T::ResourceType>();
         }
         return *this;
     }
@@ -127,13 +127,18 @@ decltype(auto) SystemCommands::get_param() {
     if constexpr (is_specialization<RawT, Query>) {
         return RawT(query(std::to_string(RawT::hash())));
     } else if constexpr (is_specialization<RawT, EventReader>) {
-        return event_reader(refl::type<RawT::EventType>());
+        return event_reader(refl::type<typename RawT::EventType>());
     } else if constexpr (is_specialization<RawT, EventWriter>) {
-        return event_writer(refl::type<RawT::EventType>());
+        return event_writer(refl::type<typename RawT::EventType>());
     } else if constexpr (is_specialization<RawT, Resource>) {
-        return resource(refl::type<RawT::ResourceType>());
+        return resource(refl::type<typename RawT::ResourceType>());
     } else if constexpr (is_specialization<RawT, LocalResource>) {
-        return GenericLocalResource(m_system.m_local_resources[refl::type<RawT::ResourceType>().id()].ref());
+        return GenericLocalResource(
+            m_system
+                .m_local_resources[refl::type<typename RawT::ResourceType>().id(
+                )]
+                .ref()
+        );
     } else if constexpr (std::same_as<RawT, Commands>) {
         return commands();
     }

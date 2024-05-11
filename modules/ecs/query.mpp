@@ -120,57 +120,70 @@ class Query {
         Iterator(Query* q, size_t archetype_index, size_t entity_index) :
             m_query(q), m_archetype_index(archetype_index),
             m_entity_index(entity_index) {
-            update_column_map();
+            update_pointers();
         }
 
         template<class T>
         T& get() const {
-            size_t column = m_column_map[index_in_args<T, Args...>()];
-            return *static_cast<T*>(
-                archetype().get_component(column, m_entity_index)
-            );
+            return *static_cast<T*>(m_archetype->get_component(
+                m_archetype->entities()[m_entity_index],
+                refl::type<T>()
+            ));
         }
 
-        Entity entity() const { return archetype().entities()[m_entity_index]; }
+        Entity entity() const {
+            return m_archetype->entities()[m_entity_index];
+        }
 
-        value_type operator*() { return {get<Args>()...}; }
+        value_type operator*() const {
+            return {*static_cast<Args*>(
+                m_pointers[index_in_args<Args, Args...>()]
+            )...};
+        }
 
         Iterator& operator++() {
             m_entity_index++;
-            while (m_entity_index == archetype().size()) {
+            [&]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
+                ((m_pointers[ArgIdx] =
+                      static_cast<char*>(m_pointers[ArgIdx]) + sizeof(Args)),
+                 ...);
+            }(std::make_index_sequence<sizeof...(Args)>());
+            while (m_entity_index == m_archetype->size()) {
                 m_entity_index = 0;
                 m_archetype_index++;
                 if (m_archetype_index == m_query->matched().size())
                     return *this;
+                update_pointers();
             }
-            update_column_map();
             return *this;
         }
 
         bool operator==(Iterator& other) const {
             return m_query == other.m_query &&
-                   m_archetype_index == other.m_archetype_index
-                //    && m_entity_index == other.m_entity_index;
-                ;
+                   m_archetype_index == other.m_archetype_index &&
+                   m_entity_index == other.m_entity_index;
         }
 
         bool operator!=(Iterator& other) const { return !(*this == other); }
 
-        Archetype& archetype() const {
-            return *m_query->matched()[m_archetype_index];
+      private:
+        void update_pointers() {
+            if (m_archetype_index != m_query->matched().size()) {
+                m_archetype = m_query->matched()[m_archetype_index];
+                m_pointers = {m_archetype->get_component(
+                    m_archetype->get_column_index(refl::type<Args>()),
+                    0
+                )...};
+            }
         }
 
-      private:
-        void update_column_map() {
-            if (m_archetype_index != m_query->matched().size())
-                m_column_map = {archetype().get_column_index(refl::type<Args>()
-                )...};
-        }
+        const size_t c_sizes[sizeof...(Args)] = {sizeof(Args)...};
 
         Query* m_query;
         size_t m_archetype_index;
         size_t m_entity_index;
-        std::array<size_t, sizeof...(Args)> m_column_map;
+        Archetype* m_archetype;
+        std::array<void*, sizeof...(Args)> m_pointers;
     };
 
     Query(GenericQuery& q) : m_query(q) {

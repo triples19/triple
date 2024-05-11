@@ -2,10 +2,12 @@ module;
 #include <string>
 
 module triple.ecs;
+import triple.refl;
 
 namespace triple::ecs {
 
-System::System(World& world, SystemId id) : m_world(world), m_id(id), m_commands(*this) {}
+System::System(World& world, SystemId id) :
+    m_world(world), m_id(id), m_commands(*this) {}
 
 System& System::add_query(const std::string& name, ComponentVector types) {
     m_queries[name] = &m_world.query(types);
@@ -23,7 +25,10 @@ System& System::add_event_wrtier(const refl::Type& event_type) {
 }
 
 System& System::add_resource(const refl::Type& resource_type) {
-    m_resources.emplace(resource_type.id(), m_world.get_resource(resource_type));
+    m_resources.emplace(
+        resource_type.id(),
+        m_world.get_resource(resource_type)
+    );
     return *this;
 }
 

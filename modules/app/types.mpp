@@ -5,6 +5,3 @@ export module triple.app:types;
 import triple.refl;
 import :app;
 import :asset;
-
-TYPE(triple::app::AppStates)
-TYPE(triple::app::AssetServer)

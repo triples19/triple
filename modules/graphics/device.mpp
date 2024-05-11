@@ -15,7 +15,7 @@ import :buffer;
 
 namespace triple::graphics {
 
-class RenderDevice;
+export class RenderDevice;
 static RenderDevice* s_instance = nullptr;
 
 export class RenderDevice {

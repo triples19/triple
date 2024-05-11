@@ -9,8 +9,8 @@ import :type_of;
 
 namespace triple::refl {
 
-class Value;
-class Var;
+export class Value;
+export class Var;
 
 template<class T, class U>
 concept not_same_as = !std::same_as<T, U>;
@@ -26,11 +26,13 @@ export class Ref {
     Ref(T* object) : m_type(&type_of(object)), m_value(object) {}
 
     template<typename T>
-    Ref(const T* object) : m_type(&type_of(object)), m_value(const_cast<T*>(object)) {}
+    Ref(const T* object) :
+        m_type(&type_of(object)), m_value(const_cast<T*>(object)) {}
 
     template<typename T>
         requires not_same_as<T, Ref>
-    Ref(const T& object) : m_type(&type_of(object)), m_value(const_cast<T*>(&object)) {}
+    Ref(const T& object) :
+        m_type(&type_of(object)), m_value(const_cast<T*>(&object)) {}
 
     template<typename T>
         requires not_same_as<T, Ref>
@@ -41,8 +43,12 @@ export class Ref {
     Ref& operator=(const Ref& ref) = default;
     Ref& operator=(Ref&& ref) = default;
 
-    inline bool operator==(const Ref& other) const { return m_type == other.m_type && m_value == other.m_value; }
-    inline bool operator!=(const Ref& other) const { return m_type != other.m_type || m_value != other.m_value; }
+    inline bool operator==(const Ref& other) const {
+        return m_type == other.m_type && m_value == other.m_value;
+    }
+    inline bool operator!=(const Ref& other) const {
+        return m_type != other.m_type || m_value != other.m_value;
+    }
     inline explicit operator bool() const { return m_value != nullptr; }
 
     const Type& type() const { return *m_type; }

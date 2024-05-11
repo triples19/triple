@@ -15,6 +15,24 @@ TEST_CASE("Benchmark") {
     BENCHMARK_ADVANCED("ecs-1")
     (Catch::Benchmark::Chronometer meter) {
         using namespace triple;
+        World world;
+        for (size_t i = 0; i < entity_count; i++) {
+            Entity entity = world.entity();
+            world.add_component(entity, Object {1});
+        }
+        auto query = world.query<Object>();
+        meter.measure([&query] {
+            size_t result = 0;
+            for (auto [object] : query) {
+                result += object.x;
+            }
+            return result;
+        });
+    };
+
+    BENCHMARK_ADVANCED("ecs-2")
+    (Catch::Benchmark::Chronometer meter) {
+        using namespace triple;
         Archetype archetype(0, {&type<Object>()});
         Object obj {1};
         for (size_t i = 0; i < entity_count; i++) {
@@ -27,24 +45,6 @@ TEST_CASE("Benchmark") {
             for (size_t i = 0; i < entity_count; i++) {
                 result += ptr->x;
                 ptr++;
-            }
-            return result;
-        });
-    };
-
-    BENCHMARK_ADVANCED("ecs-2")
-    (Catch::Benchmark::Chronometer meter) {
-        using namespace triple;
-        World world;
-        for (size_t i = 0; i < entity_count; i++) {
-            Entity entity = world.entity();
-            world.add_component(entity, Object {1});
-        }
-        auto query = world.query<Object>();
-        meter.measure([&query] {
-            size_t result = 0;
-            for (auto [object] : query) {
-                result += object.x;
             }
             return result;
         });
@@ -85,16 +85,17 @@ TEST_CASE("Benchmark") {
 
 // using namespace triple;
 // void benchmark(Query<Object>& query) {
-//     size_t result = 0;
-//     for (auto [object] : query) {
-//         result += object.x;
+//     for (int i = 0; i < 1000; i++) {
+//         volatile size_t result = 0;
+//         for (auto [object] : query) {
+//             result += object.x;
+//         }
 //     }
-//     log::info("{}", result);
 // }
 
 // int main() {
 //     World world;
-//     for (size_t i = 0; i < entity_count * 100; i++) {
+//     for (size_t i = 0; i < 100000; i++) {
 //         Entity entity = world.entity();
 //         world.add_component(entity, Object {1});
 //     }

@@ -1,6 +1,7 @@
 module;
 #include <cassert>
 #include <string_view>
+#include <vector>
 
 export module triple.refl:method;
 import :type;
@@ -12,8 +13,11 @@ namespace triple::refl {
 
 export class Method : public Callable {
   public:
-    Method(std::string_view name, const std::vector<Param>& params, const QualType& return_type) :
-        Callable(name, params, return_type) {}
+    Method(
+        std::string_view name,
+        const std::vector<Param>& params,
+        const QualType& return_type
+    ) : Callable(name, params, return_type) {}
     virtual ~Method() = default;
 
     virtual Var invoke_variadic(const std::vector<Ref>& args) const = 0;
@@ -29,15 +33,20 @@ class TMethod : public Method {
     using MethodType = typename MemberTrait<P>::Type;
     using ParentType = typename MemberTrait<P>::ParentType;
     using ReturnType = typename SignatureTrait<MethodType>::ReturnType;
-    constexpr static auto c_params_count = SignatureTrait<MethodType>::params_count;
+    constexpr static auto c_params_count =
+        SignatureTrait<MethodType>::params_count;
     constexpr static auto c_is_static = MemberTrait<P>::is_static;
 
     template<size_t Index>
-    using TypeOfParam = typename SignatureTrait<MethodType>::template TypeOfParam<Index>::Type;
+    using TypeOfParam =
+        typename SignatureTrait<MethodType>::template TypeOfParam<Index>::Type;
 
   public:
-    TMethod(std::string_view name, P ptr, const std::vector<std::string_view>& param_names) :
-        Method(name, {}, refl::type<ReturnType>()), m_ptr(ptr) {
+    TMethod(
+        std::string_view name,
+        P ptr,
+        const std::vector<std::string_view>& param_names
+    ) : Method(name, {}, refl::type<ReturnType>()), m_ptr(ptr) {
         assert(param_names.size() == c_params_count);
         auto types = SignatureTrait<MethodType>::param_types();
         for (int i = 0; i < c_params_count; i++) {
@@ -65,9 +74,16 @@ class TMethod : public Method {
 
   private:
     template<class... Args, size_t... N>
-    decltype(auto) invoke_template_expand(std::index_sequence<N...>, Ref instance, Args&&... args) const {
+    decltype(auto) invoke_template_expand(
+        std::index_sequence<N...>,
+        Ref instance,
+        Args&&... args
+    ) const {
         if constexpr (c_is_static) {
-            return std::invoke(m_ptr, std::forward<Args>(args).template value<TypeOfParam<N>>()...);
+            return std::invoke(
+                m_ptr,
+                std::forward<Args>(args).template value<TypeOfParam<N>>()...
+            );
         } else {
             return std::invoke(
                 m_ptr,
@@ -95,7 +111,8 @@ class TMethod : public Method {
                     instance,
                     std::forward<Args>(args)...
                 );
-                if constexpr (std::is_pointer_v<ReturnType> || std::is_reference_v<ReturnType>) {
+                if constexpr (std::is_pointer_v<ReturnType> ||
+                              std::is_reference_v<ReturnType>) {
                     return Ref(ret);
                 } else {
                     return Value(ret);
