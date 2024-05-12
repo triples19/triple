@@ -1,5 +1,9 @@
+module;
+#include "refl_macros.hpp"
+
 export module triple.core:transform;
 import triple.math;
+import triple.refl;
 
 namespace triple::core {
 
@@ -9,9 +13,11 @@ export struct Transform2D {
     float rotation {0.0f};
 
     inline math::Matrix4x4 model_matrix() const {
-        return math::translate(position.x, position.y, 0.0f) * math::rotate_z(rotation) *
-               math::scale(scale.x, scale.y, 1.0f);
+        return math::translate(position.x, position.y, 0.0f) *
+               math::rotate_z(rotation) * math::scale(scale.x, scale.y, 1.0f);
     }
 };
 
 } // namespace triple::core
+
+REFL(triple::core::Transform2D)

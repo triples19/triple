@@ -5,8 +5,6 @@ add_requires("catch2", "glfw", "stb")
 add_requires("imgui", {configs = {glfw = true, opengl3 = true}})
 add_packages("glfw", "stb")
 
-
-
 includes("thirdparty")
 includes("modules")
 includes("samples")

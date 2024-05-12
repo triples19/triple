@@ -32,6 +32,37 @@ export struct Time {
     float m_delta_time = 0.0f;
 };
 
+export enum TimerMode {
+    Once,
+    Repeating,
+};
+
+export class Timer {
+  public:
+    Timer(float duration_seconds, TimerMode mode) :
+        m_duration(duration_seconds), m_mode(mode) {}
+
+    void tick(float delta) {
+        if (m_just_finished) {
+            m_just_finished = false;
+        }
+        m_time += delta;
+        if (m_time >= m_duration) {
+            m_time -= m_duration;
+            m_just_finished = true;
+        }
+    }
+
+    bool just_finished() const { return m_just_finished; }
+
+  private:
+    float m_time {0.0f};
+    bool m_just_finished {false};
+
+    float m_duration;
+    TimerMode m_mode;
+};
+
 void time_system(ecs::Resource<Time> time) {
     time->tick();
 }
@@ -39,6 +70,7 @@ void time_system(ecs::Resource<Time> time) {
 } // namespace triple::core
 
 REFL(triple::core::Time)
+REFL(triple::core::Timer)
 
 namespace triple::core {
 export class TimePlugin : public app::Plugin {

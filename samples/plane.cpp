@@ -37,8 +37,9 @@ struct CollideEvent {
 REFL(CollideEvent)
 
 struct Player {
-    float shoot_cooldown;
-    float shoot_timer;
+    // float shoot_cooldown;
+    // float shoot_timer;
+    Timer shoot_timer;
     float speed;
 };
 REFL(Player)
@@ -66,7 +67,6 @@ void register_types() {
         .add_member("entity_a", &CollideEvent::entity_a)
         .add_member("entity_b", &CollideEvent::entity_b);
     Cls::new_cls<Player>()
-        .add_member("shoot_cooldown", &Player::shoot_cooldown)
         .add_member("shoot_timer", &Player::shoot_timer)
         .add_member("speed", &Player::speed);
     Cls::new_cls<Enemy>().add_member("speed", &Enemy::speed);
@@ -134,8 +134,7 @@ void setup_scene(
     );
     commands.spawn().add(
         Player {
-            .shoot_cooldown = player_shoot_cooldown,
-            .shoot_timer = 0.0f,
+            .shoot_timer = Timer(player_shoot_cooldown, TimerMode::Repeating),
             .speed = player_speed,
         },
         Sprite {
@@ -194,7 +193,8 @@ void player_shoot(
     Resource<KeyInput> key_input
 ) {
     auto [player, transform] = *q_player.begin();
-    while (player.shoot_timer > player.shoot_cooldown) {
+    player.shoot_timer.tick(time->delta());
+    if (player.shoot_timer.just_finished()) {
         commands.spawn().add(
             Bullet {
                 .speed = bullet_speed,
@@ -212,28 +212,7 @@ void player_shoot(
                 .offset = {0.0f, 0.0f},
             }
         );
-        player.shoot_timer -= player.shoot_cooldown;
     }
-    player.shoot_timer += time->delta();
-    // if (key_input->just_pressed(KeyCode::Space)) {
-    //     commands.spawn().add(
-    //         Bullet {
-    //             .speed = bullet_speed,
-    //         },
-    //         Sprite {
-    //             .texture = asset_server->load<Texture2D>("bullet_0.png"),
-    //             .program = asset_server->load<Program>("sprite.glsl")
-    //         },
-    //         Transform2D {
-    //             .position = transform.position,
-    //             .scale = {3.0f, 3.0f},
-    //         },
-    //         BoxCollider {
-    //             .size = {8.0f, 16.0f},
-    //             .offset = {0.0f, 0.0f},
-    //         }
-    //     );
-    // }
 }
 
 void move_bullet(
