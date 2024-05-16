@@ -1,5 +1,8 @@
 #define NOMODULE
 #include "refl_macros.hpp"
+
+#include "imgui.h"
+
 #include <cassert>
 #include <filesystem>
 #include <unordered_set>
@@ -10,11 +13,19 @@ import samples.common;
 
 using namespace triple;
 
-constexpr float player_speed = 800.0f;
-constexpr float player_shoot_cooldown = 0.5f;
-constexpr float enemy_speed = 400.0f;
-constexpr float bullet_speed = 1000.0f;
-constexpr float enemy_spawn_cooldown = 1.0f;
+constexpr float player_speed = 1000.0f;
+constexpr float player_shoot_cooldown = 0.3f;
+constexpr float player_bullet_speed = 1000.0f;
+constexpr float enemy_speed_min = 300.0f;
+constexpr float enemy_speed_max = 400.0f;
+constexpr float enemy_spawn_cooldown = 0.5f;
+constexpr float enemy_shoot_cooldown = 1.2f;
+constexpr float enemy_bullet_speed = 500.0f;
+constexpr int player_init_health = 3;
+constexpr int enemy_init_health = 2;
+
+float global_scale = 3.0f;
+bool show_debug = false;
 
 struct BoxCollider {
     Vector2 size;
@@ -37,25 +48,28 @@ struct CollideEvent {
 REFL(CollideEvent)
 
 struct Player {
-    // float shoot_cooldown;
-    // float shoot_timer;
     Timer shoot_timer;
     float speed;
+    int health;
 };
 REFL(Player)
 
 struct Enemy {
     float speed;
+    int health;
+    Timer shoot_timer;
 };
 REFL(Enemy)
 
 struct Bullet {
-    float speed;
+    Vector2 speed;
+    enum Tag { Player, Enemy } tag;
 };
 REFL(Bullet)
 
 struct Game {
     float enemy_spawn_timer {0.0f};
+    int score {0};
 };
 REFL(Game)
 
@@ -87,27 +101,36 @@ bool rect_collide(const Rect& a, const Rect& b) {
            a.max.y > b.min.y;
 }
 
-void check_bullet_enemy_collide(
+void check_bullet_collide(
     Query<Bullet, BoxCollider, Transform2D> q_bullet,
     Query<Enemy, BoxCollider, Transform2D> q_enemy,
+    Query<Player, BoxCollider, Transform2D> q_player,
     Commands commands
 ) {
     std::unordered_set<Entity> to_despawn;
+    auto [player, collider_player, transform_player] = *q_player.begin();
     for (auto iter1 = q_bullet.begin(); iter1 != q_bullet.end(); ++iter1) {
-        if (to_despawn.find(iter1.entity()) != to_despawn.end()) {
+        if (to_despawn.find(iter1.entity()) != to_despawn.end())
+            continue;
+        auto [bullet, collider_bullet, transform_bullet] = *iter1;
+        auto rect_bullet = collider_bullet.rect_global(transform_bullet);
+        auto rect_player = collider_player.rect_global(transform_player);
+        if (bullet.tag == Bullet::Enemy &&
+            rect_collide(rect_bullet, rect_player)) {
+            to_despawn.insert(iter1.entity());
+            player.health--;
             continue;
         }
         for (auto iter2 = q_enemy.begin(); iter2 != q_enemy.end(); ++iter2) {
-            if (to_despawn.find(iter2.entity()) != to_despawn.end()) {
+            if (to_despawn.find(iter2.entity()) != to_despawn.end())
                 continue;
-            }
-            auto [bullet, collider_bullet, transform_bullet] = *iter1;
             auto [enemy, collider_enemy, transform_enemy] = *iter2;
-            auto rect_bullet = collider_bullet.rect_global(transform_bullet);
+            if (bullet.tag == Bullet::Enemy)
+                continue;
             auto rect_enemy = collider_enemy.rect_global(transform_enemy);
             if (rect_collide(rect_bullet, rect_enemy)) {
                 to_despawn.insert(iter1.entity());
-                to_despawn.insert(iter2.entity());
+                enemy.health--;
             }
         }
     }
@@ -136,10 +159,10 @@ void setup_scene(
         Player {
             .shoot_timer = Timer(player_shoot_cooldown, TimerMode::Repeating),
             .speed = player_speed,
+            .health = player_init_health,
         },
         Sprite {
             .texture = asset_server->load<Texture2D>("ship_0.png"),
-            .program = asset_server->load<Program>("sprite.glsl")
         },
         Transform2D {
             .position = {0.0f, 0.0f},
@@ -156,6 +179,8 @@ void draw_debug(
     Query<BoxCollider, Transform2D> q_player,
     Resource<Debug> debug
 ) {
+    if (!show_debug)
+        return;
     for (auto [collider, transform] : q_player) {
         debug->rect(collider.rect_global(transform), Color4F::Red);
     }
@@ -197,11 +222,11 @@ void player_shoot(
     if (player.shoot_timer.just_finished()) {
         commands.spawn().add(
             Bullet {
-                .speed = bullet_speed,
+                .speed = {0.0f, player_bullet_speed},
+                .tag = Bullet::Player,
             },
             Sprite {
                 .texture = asset_server->load<Texture2D>("bullet_0.png"),
-                .program = asset_server->load<Program>("sprite.glsl")
             },
             Transform2D {
                 .position = transform.position,
@@ -215,7 +240,7 @@ void player_shoot(
     }
 }
 
-void move_bullet(
+void update_bullet(
     Query<Bullet, Transform2D> q_bullet,
     Resource<Time> time,
     Resource<Window> win,
@@ -224,8 +249,9 @@ void move_bullet(
     for (auto iter = q_bullet.begin(); iter != q_bullet.end(); ++iter) {
         auto [bullet, transform] = *iter;
         auto entity = iter.entity();
-        transform.position.y += bullet_speed * time->delta();
-        if (transform.position.y > win->height / 2 + 8.0f * 3.0f) {
+        transform.position += bullet.speed * time->delta();
+        if (transform.position.y > win->height / 2 + 8.0f * 3.0f ||
+            transform.position.y < -win->height / 2 - 8.0f * 3.0f) {
             commands.entity(entity).despawn();
         }
     }
@@ -240,10 +266,14 @@ void spawn_enemy(
 ) {
     while (game->enemy_spawn_timer > enemy_spawn_cooldown) {
         commands.spawn().add(
-            Enemy {},
+            Enemy {
+                .speed = (float)random(enemy_speed_min, enemy_speed_max),
+                .health = enemy_init_health,
+                .shoot_timer =
+                    Timer(enemy_shoot_cooldown, TimerMode::Repeating),
+            },
             Sprite {
                 .texture = asset_server->load<Texture2D>("ship_1.png"),
-                .program = asset_server->load<Program>("sprite.glsl")
             },
             Transform2D {
                 .position =
@@ -262,58 +292,140 @@ void spawn_enemy(
     game->enemy_spawn_timer += time->delta();
 }
 
-void move_enemy(
+void update_enemy(
     Commands commands,
-    Query<Enemy, Transform2D> q_enemy,
+    Resource<AssetServer> asset_server,
+    Query<Enemy, Transform2D, BoxCollider> q_enemy,
+    Query<Player, Transform2D, BoxCollider> q_player,
     Resource<Time> time,
-    Resource<Window> win
+    Resource<Window> win,
+    Resource<Game> game
 ) {
-    std::vector<Entity> to_despawn;
+    auto [player, transform_player, collider_player] = *q_player.begin();
     for (auto iter = q_enemy.begin(); iter != q_enemy.end(); ++iter) {
-        auto [enemy, transform] = *iter;
-        transform.position.y -= enemy_speed * time->delta();
-        if (transform.position.y < -win->height / 2 - 16.0f * 3.0f) {
-            to_despawn.push_back(iter.entity());
+        auto [enemy, transform, collider] = *iter;
+        if (enemy.health <= 0) {
+            commands.entity(iter.entity()).despawn();
+            game->score++;
+            continue;
         }
-    }
-    for (auto entity : to_despawn) {
-        commands.entity(entity).despawn();
+        if (rect_collide(
+                collider.rect_global(transform),
+                collider_player.rect_global(transform_player)
+            )) {
+            commands.entity(iter.entity()).despawn();
+            player.health--;
+            game->score++;
+            continue;
+        }
+        transform.position.y -= enemy.speed * time->delta();
+        if (transform.position.y < -win->height / 2 - 16.0f * 3.0f) {
+            commands.entity(iter.entity()).despawn();
+        }
+        enemy.shoot_timer.tick(time->delta());
+        if (enemy.shoot_timer.just_finished()) {
+            commands.spawn().add(
+                Bullet {
+                    .speed = {0.0f, -enemy_bullet_speed},
+                    .tag = Bullet::Enemy,
+                },
+                Sprite {
+                    .texture = asset_server->load<Texture2D>("bullet_1.png"),
+                },
+                Transform2D {
+                    .position =
+                        transform.position - Vector2 {0.0f, 16.0f * 3.0f},
+                    .scale = {3.0f, 3.0f},
+                },
+                BoxCollider {
+                    .size = {8.0f, 16.0f},
+                    .offset = {0.0f, 0.0f},
+                }
+            );
+        }
     }
 }
 
-void pause_system(Resource<KeyInput> key_input, Resource<Time> time) {
-    if (key_input->just_pressed(KeyCode::P)) {
-        if (time->time_scale == 0.0f) {
-            time->time_scale = 1.0f;
-        } else {
-            time->time_scale = 0.0f;
-        }
+void update_ui(
+    Commands commands,
+    Query<Player, Transform2D, Sprite, BoxCollider> q_player,
+    Query<Bullet> q_bullet,
+    Query<Enemy> q_enemy,
+    Resource<Game> game,
+    Resource<Time> time,
+    Resource<AppStates> app_states
+) {
+    auto [player, transform, sprite, collider] = *q_player.begin();
+    ImGui::Begin("Game");
+
+    ImGui::Text("Score: %d", game->score);
+    ImGui::Text("Health: %d", player.health);
+    if (ImGui::Button("Show Debug")) {
+        show_debug = !show_debug;
     }
+
+    // if (ImGui::CollapsingHeader("Player")) {
+    //     ImGui::InputInt("HP", &player.health, 0, 0);
+    //     ImGui::InputFloat2("Position", &transform.position.x);
+    // }
+
+    static bool modal_open = false;
+    if (player.health <= 0 && !modal_open) {
+        ImGui::OpenPopup("Game Over");
+        modal_open = true;
+        time->time_scale = 0.0f;
+    }
+
+    if (ImGui::BeginPopupModal(
+            "Game Over",
+            NULL,
+            ImGuiWindowFlags_AlwaysAutoResize
+        )) {
+        ImGui::Text("Game Over!");
+        ImGui::Text("Score: %d", game->score);
+        if (ImGui::Button("Restart")) {
+            game->score = 0;
+            player.health = player_init_health;
+            ImGui::CloseCurrentPopup();
+            modal_open = false;
+            time->time_scale = 1.0f;
+
+            for (auto iter = q_bullet.begin(); iter != q_bullet.end(); ++iter) {
+                commands.entity(iter.entity()).despawn();
+            }
+            for (auto iter = q_enemy.begin(); iter != q_enemy.end(); ++iter) {
+                commands.entity(iter.entity()).despawn();
+            }
+            transform.position = {0.0f, 0.0f};
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Quit")) {
+            ImGui::CloseCurrentPopup();
+            modal_open = false;
+            time->time_scale = 1.0f;
+            app_states->should_stop = true;
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::End();
 }
 
 int main() {
     register_types();
     App app;
     app.add_plugin<SamplesPlugin>()
-        .add_plugin<TimePlugin>()
-        .add_plugin<WindowPlugin>()
-        .add_plugin<InputPlugin>()
-        .add_plugin<OpenGLPlugin>()
-        .add_plugin<GraphicsPlugin>()
-        .add_plugin<RenderPlugin>()
-        .add_plugin<SpritePlugin>()
-        .add_plugin<DebugPlugin>()
         .add_plugin<UiPlugin>()
         .add_event<CollideEvent>()
         .add_resource<Game>()
         .add_system(StartUp, setup_scene)
-        .add_system(Update, check_bullet_enemy_collide)
+        .add_system(Update, check_bullet_collide)
         .add_system(Update, draw_debug)
         .add_system(Update, move_player)
         .add_system(Update, player_shoot)
-        .add_system(Update, move_bullet)
+        .add_system(Update, update_bullet)
         .add_system(Update, spawn_enemy)
-        .add_system(Update, move_enemy)
-        .add_system(Update, pause_system)
+        .add_system(Update, update_enemy)
+        .add_system(RenderUpdate, update_ui)
         .run();
 }

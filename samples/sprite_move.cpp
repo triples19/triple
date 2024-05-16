@@ -23,7 +23,6 @@ void setup_scene(
             .color = {1.0f, 1.0f, 1.0f, 1.0f},
             .anchor = Vector2 {0.5f, 0.5f},
             .texture = asset_server->load<Texture2D>("awesomeface.png"),
-            .program = asset_server->load<Program>("sprite.glsl")
         })
         .add(Transform2D {
             .position = {0.0f, 0.0f},
@@ -56,9 +55,7 @@ void move_sprite(
 int main() {
     App app;
     app.add_plugin<SamplesPlugin>()
-        .add_plugin<TimePlugin>()
         .add_plugin<WindowPlugin>()
-        .add_plugin<InputPlugin>()
         .add_plugin<OpenGLPlugin>()
         .add_plugin<GraphicsPlugin>()
         .add_plugin<RenderPlugin>()

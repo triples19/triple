@@ -51,6 +51,31 @@ export struct Debug {
         line(rect.max, {rect.min.x, rect.max.y}, color);
         line({rect.min.x, rect.max.y}, rect.min, color);
     }
+    inline void circle(
+        math::Vector2 center,
+        float radius,
+        int segments,
+        math::Color4F color = {1.0f, 1.0f, 1.0f, 1.0f}
+    ) {
+        float step = 2.0f * math::PI / segments;
+        for (int i = 0; i < segments; ++i) {
+            float angle = i * step;
+            float next_angle = (i + 1) * step;
+            line(
+                center +
+                    math::Vector2 {
+                        radius * math::cos(angle),
+                        radius * math::sin(angle)
+                    },
+                center +
+                    math::Vector2 {
+                        radius * math::cos(next_angle),
+                        radius * math::sin(next_angle)
+                    },
+                color
+            );
+        }
+    }
     inline void clear() { data.clear(); }
 };
 

@@ -18,9 +18,11 @@ export enum MainSchedules : std::uint32_t {
     PostUpdate,
     Last,
 
+    RenderFirst,
     RenderStart,
     RenderUpdate,
     RenderEnd,
+    RenderLast
 };
 
 export struct AppStates {
@@ -38,9 +40,11 @@ export class App {
         m_world.add_schedule(PostUpdate);
         m_world.add_schedule(Last);
 
+        m_world.add_schedule(RenderFirst);
         m_world.add_schedule(RenderStart);
         m_world.add_schedule(RenderUpdate);
         m_world.add_schedule(RenderEnd);
+        m_world.add_schedule(RenderLast);
 
         add_resource<AppStates>();
     }
@@ -99,9 +103,11 @@ export class App {
             run_schedule(PostUpdate);
             run_schedule(Last);
 
+            run_schedule(RenderFirst);
             run_schedule(RenderStart);
             run_schedule(RenderUpdate);
             run_schedule(RenderEnd);
+            run_schedule(RenderLast);
 
             auto app_states = m_world.get_resource<AppStates>();
             should_stop = app_states->should_stop;

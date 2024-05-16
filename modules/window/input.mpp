@@ -9,6 +9,7 @@ export module triple.window:input;
 import triple.ecs;
 import triple.app;
 import triple.refl;
+import triple.math;
 import :window;
 
 namespace triple::window {
@@ -46,7 +47,8 @@ export struct KeyEvent {
     KeyState state;
 };
 
-export struct KeyInput {
+export class KeyInput {
+  public:
     inline bool pressed(KeyCode key) const {
         return keys.at(key).down_this_frame;
     }
@@ -74,20 +76,65 @@ export struct KeyInput {
     std::map<KeyCode, KeyStateInternal> keys;
 };
 
+export enum class MouseButton : int32_t {
+    Left = GLFW_MOUSE_BUTTON_LEFT,
+    Right = GLFW_MOUSE_BUTTON_RIGHT,
+    Middle = GLFW_MOUSE_BUTTON_MIDDLE,
+};
+
+export class MouseInput {
+  public:
+    inline void set_position(math::Vector2 position) { m_position = position; }
+    inline math::Vector2 position() const { return m_position; }
+
+    inline void press(MouseButton button) {
+        keys[button].down_this_frame = true;
+    }
+    inline void release(MouseButton button) {
+        keys[button].down_this_frame = false;
+    }
+    inline bool pressed(MouseButton button) const {
+        return keys.at(button).down_this_frame;
+    }
+    inline bool just_pressed(MouseButton button) const {
+        return keys.at(button).down_this_frame &&
+               !keys.at(button).down_last_frame;
+    }
+    inline bool just_released(MouseButton button) const {
+        return !keys.at(button).down_this_frame &&
+               keys.at(button).down_last_frame;
+    }
+    inline void clear() {
+        for (auto& [key, state] : keys) {
+            state.down_last_frame = state.down_this_frame;
+            state.down_this_frame = false;
+        }
+    }
+
+  private:
+    math::Vector2 m_position;
+    struct KeyStateInternal {
+        bool down_this_frame {false};
+        bool down_last_frame {false};
+    };
+    std::map<MouseButton, KeyStateInternal> keys;
+};
+
 } // namespace triple::window
 REFL(triple::window::KeyEvent)
 REFL(triple::window::KeyInput)
+REFL(triple::window::MouseInput)
 
 namespace triple::window {
 
 void key_input_system(
-    ecs::Resource<Window> win_res,
+    ecs::Resource<Window> win,
     ecs::Resource<KeyInput> input
 ) {
-    auto win = win_res->glfw_window;
+    auto glfw_window = win->glfw_window;
     input->clear();
     for (KeyCode key_code : c_key_codes) {
-        int state = glfwGetKey(win, static_cast<int>(key_code));
+        int state = glfwGetKey(glfw_window, static_cast<int>(key_code));
         if (state == GLFW_PRESS) {
             input->press(key_code);
         } else if (state == GLFW_RELEASE) {
@@ -96,11 +143,33 @@ void key_input_system(
     }
 }
 
+void mouse_input_system(
+    ecs::Resource<Window> win,
+    ecs::Resource<MouseInput> input
+) {
+    auto glfw_window = win->glfw_window;
+    input->clear();
+    for (MouseButton button :
+         {MouseButton::Left, MouseButton::Right, MouseButton::Middle}) {
+        int state = glfwGetMouseButton(glfw_window, static_cast<int>(button));
+        if (state == GLFW_PRESS) {
+            input->press(button);
+        } else if (state == GLFW_RELEASE) {
+            input->release(button);
+        }
+    }
+    double xpos, ypos;
+    glfwGetCursorPos(glfw_window, &xpos, &ypos);
+    input->set_position({(float)xpos, (float)ypos});
+}
+
 export class InputPlugin : public app::Plugin {
   public:
     void setup(app::App& app) {
         app.add_resource<KeyInput>();
+        app.add_resource<MouseInput>();
         app.add_system(app::PreUpdate, key_input_system);
+        app.add_system(app::PreUpdate, mouse_input_system);
     }
 };
 

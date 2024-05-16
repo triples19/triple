@@ -22,21 +22,95 @@ using namespace app;
 using namespace core;
 using namespace math;
 
+static const char* sprite_vertex_shader = R"(#version 330 core
+layout (location = 0) in vec2 vVertex;
+layout (location = 1) in vec4 vColor;
+layout (location = 2) in vec2 vTexCoords;
+
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 proj;
+
+out vec2 fTexCoords;
+out vec4 fColor;
+
+void main()
+{
+    fTexCoords = vTexCoords;
+    fColor = vColor;
+    gl_Position = proj * view * model * vec4(vVertex, 0.0, 1.0);
+}
+)";
+
+static const char* sprite_fragment_shader = R"(#version 330 core
+in vec2 fTexCoords;
+in vec4 fColor;
+out vec4 oColor;
+
+uniform sampler2D image;
+
+void main()
+{
+    oColor = fColor * texture(image, fTexCoords);
+}
+)";
+
 export struct Sprite {
     Color4F color {1.0f, 1.0f, 1.0f, 1.0f};
     Vector2 anchor {0.5f, 0.5f};
     Handle<Texture2D> texture;
-    Handle<Program> program;
 };
 
 export struct SpriteRendererResource {
     Buffer* vertex_buffer {nullptr};
+    Program* program {nullptr};
+    RenderPipeline* pipeline {nullptr};
 };
 
 void sprite_renderer_setup(Resource<SpriteRendererResource> res) {
     auto device = RenderDevice::instance();
     res->vertex_buffer =
         device->create_buffer(BufferType::Vertex, BufferUsage::Dynamic);
+
+    graphics::Shader* vert = device->create_shader(
+        graphics::ShaderStage::Vertex,
+        sprite_vertex_shader
+    );
+    graphics::Shader* frag = device->create_shader(
+        graphics::ShaderStage::Fragment,
+        sprite_fragment_shader
+    );
+    res->program = device->create_program(*vert, *frag);
+    delete vert;
+    delete frag;
+
+    RenderPipelineDescriptor desc {
+        .program = res->program,
+        .vertex_layout =
+            {.attributes =
+                 {VertexAttribute {
+                      .location = 0,
+                      .offset = 0,
+                      .format = VertexFormat::Float2,
+                      .normalized = false,
+                  },
+                  VertexAttribute {
+                      .location = 1,
+                      .offset = sizeof(Vector2),
+                      .format = VertexFormat::Float4,
+                      .normalized = false,
+                  },
+                  VertexAttribute {
+                      .location = 2,
+                      .offset = sizeof(Vector2) + sizeof(Color4F),
+                      .format = VertexFormat::Float2,
+                      .normalized = false,
+                  }},
+             .stride = sizeof(V2F_C4F_T2F)},
+        .render_primitive = RenderPrimitive::Triangles,
+        .rasterization_state = {},
+    };
+    res->pipeline = device->create_render_pipeline(desc);
 }
 
 void render_sprite(
@@ -53,45 +127,28 @@ void render_sprite(
     Matrix4x4 proj = camera.projection();
     Matrix4x4 view = camera_transform.model_matrix().inverse_affine();
 
-    auto do_vertex_transform = [](Vector2& vert,
-                                  const Texture2D& texture,
-                                  const Vector2& anchor,
-                                  const Matrix4x4& model,
-                                  const Matrix4x4& view,
-                                  const Matrix4x4& proj) {
-        Vector2 vert_transformed =
-            (vert - anchor) * Vector2(texture.width(), texture.height());
-        Vector4 vert_homo {vert_transformed.x, vert_transformed.y, 0.0f, 1.0f};
-        vert_homo = proj * view * model * vert_homo;
-        vert = {vert_homo.x, vert_homo.y};
-    };
+    sprite_res->pipeline->set_uniform("model", Matrix4x4::Identity);
+    sprite_res->pipeline->set_uniform("view", view);
+    sprite_res->pipeline->set_uniform("proj", proj);
+
     auto sprite_iter = q_sprite.iter();
     for (auto [sprite, transform] : q_sprite) {
         auto& texture = asset_server->get(sprite.texture);
-        auto& program = asset_server->get(sprite.program);
 
         V2F_C4F_T2F_Quad quad;
-        quad.tl.vertices = {0.0f, 1.0f};
-        quad.tr.vertices = {1.0f, 1.0f};
         quad.bl.vertices = {0.0f, 0.0f};
         quad.br.vertices = {1.0f, 0.0f};
+        quad.tl.vertices = {0.0f, 1.0f};
+        quad.tr.vertices = {1.0f, 1.0f};
 
         for (auto& x : std::vector {&quad.tl, &quad.tr, &quad.bl, &quad.br}) {
             x->color = sprite.color;
-            do_vertex_transform(
-                x->vertices,
-                texture,
-                sprite.anchor,
-                transform.model_matrix(),
-                view,
-                proj
-            );
         }
 
-        quad.tl.tex_coords = {0.0f, 1.0f};
-        quad.tr.tex_coords = {1.0f, 1.0f};
         quad.bl.tex_coords = {0.0f, 0.0f};
         quad.br.tex_coords = {1.0f, 0.0f};
+        quad.tl.tex_coords = {0.0f, 1.0f};
+        quad.tr.tex_coords = {1.0f, 1.0f};
 
         std::array<V2F_C4F_T2F, 6> buffer =
             {quad.tl, quad.br, quad.bl, quad.tl, quad.tr, quad.br};
@@ -101,38 +158,17 @@ void render_sprite(
             6 * sizeof(V2F_C4F_T2F)
         );
 
-        RenderPipelineDescriptor desc {
-            .program = &program,
-            .vertex_layout =
-                {.attributes =
-                     {VertexAttribute {
-                          .location = 0,
-                          .offset = 0,
-                          .format = VertexFormat::Float2,
-                          .normalized = false,
-                      },
-                      VertexAttribute {
-                          .location = 1,
-                          .offset = sizeof(Vector2),
-                          .format = VertexFormat::Float4,
-                          .normalized = false,
-                      },
-                      VertexAttribute {
-                          .location = 2,
-                          .offset = sizeof(Vector2) + sizeof(Color4F),
-                          .format = VertexFormat::Float2,
-                          .normalized = false,
-                      }},
-                 .stride = sizeof(V2F_C4F_T2F)},
-            .render_primitive = RenderPrimitive::Triangles,
-            .rasterization_state = {},
-        };
-        auto pipeline = device->create_render_pipeline(desc);
-        draw_list->bind_render_pipeline(pipeline);
+        Vector3 size = {(float)texture.width(), (float)texture.height(), 1.0f};
+        Matrix4x4 model = transform.model_matrix() *
+                          scale(size.x, size.y, 1.0f) *
+                          translate(-sprite.anchor.x, -sprite.anchor.y, 0.0f);
+
+        sprite_res->pipeline->set_uniform("model", model);
+
+        draw_list->bind_render_pipeline(sprite_res->pipeline);
         draw_list->bind_vertex_buffer(sprite_res->vertex_buffer);
         draw_list->bind_texture(&texture);
         draw_list->draw(0, buffer.size());
-        delete pipeline;
     }
 }
 

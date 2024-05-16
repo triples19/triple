@@ -25,6 +25,7 @@ export struct RenderResource {
     Texture2D* depth_tex {nullptr};
     DrawList* draw_list {nullptr};
     RenderDevice* device {nullptr};
+    math::Color4F clear_color_value {0.2f, 0.3f, 0.3f, 1.0f};
 };
 
 void render_setup(
@@ -60,7 +61,7 @@ void render_start(
     draw_list->begin(RenderPassDescriptor {
         .framebuffer = render_res->framebuffer,
         .clear_color = true,
-        .clear_color_value = {0.2f, 0.3f, 0.3f, 1.0f},
+        .clear_color_value = render_res->clear_color_value,
     });
     draw_list->set_viewport(0, 0, win_res->width, win_res->height);
 }
@@ -78,8 +79,8 @@ export class RenderPlugin : public Plugin {
     void setup(App& app) {
         app.add_resource<RenderResource>();
         app.add_system(StartUp, render_setup);
-        app.add_system(RenderUpdate, render_start);
-        app.add_system(RenderEnd, render_end);
+        app.add_system(RenderFirst, render_start);
+        app.add_system(RenderLast, render_end);
     }
 };
 

@@ -15,6 +15,7 @@ add_sample("input")
 add_sample("sprite_move")
 add_sample("debug_draw")
 add_sample("plane")
+add_sample("physics")
 
 target("benchmark")
     set_kind("binary")

@@ -109,7 +109,7 @@ export class World {
         if (next_archetype == nullptr) {
             ComponentVector components = archetype->components();
             components.push_back(&component);
-            next_archetype = create_archetype(components);
+            next_archetype = get_or_create_archetype(components);
         }
         move_entity(archetype, entity, next_archetype);
     }
@@ -140,7 +140,7 @@ export class World {
                 std::remove(components.begin(), components.end(), &component),
                 components.end()
             );
-            next_archetype = create_archetype(components);
+            next_archetype = get_or_create_archetype(components);
         }
         move_entity(archetype, entity, next_archetype);
     }
@@ -282,6 +282,14 @@ export class World {
     SystemId next_system_id() {
         static SystemId id = 0;
         return ++id;
+    }
+
+    Archetype* get_or_create_archetype(ComponentVector components) {
+        Archetype* archetype = get_archetype(components);
+        if (archetype == nullptr) {
+            archetype = create_archetype(components);
+        }
+        return archetype;
     }
 
     Archetype* create_archetype(const ComponentVector& components) {

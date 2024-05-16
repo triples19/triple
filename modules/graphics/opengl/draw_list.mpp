@@ -1,5 +1,6 @@
 module;
 #include <glad/glad.h>
+#include <variant>
 
 export module triple.graphics.opengl:draw_list;
 import triple.graphics;
@@ -35,13 +36,42 @@ export class DrawListOpenGL : public DrawList {
         opengl_check_error();
     }
 
-    virtual void set_viewport(i32 x, i32 y, u32 w, u32 h) { glViewport(x, y, w, h); }
+    virtual void set_viewport(i32 x, i32 y, u32 w, u32 h) {
+        glViewport(x, y, w, h);
+    }
 
     virtual void bind_render_pipeline(const RenderPipeline* pipeline) {
         m_pipeline = static_cast<const RenderPipelineOpenGL*>(pipeline);
 
         auto program = static_cast<const ProgramOpenGL*>(m_pipeline->program());
         glUseProgram(program->handler());
+
+        const auto& uniforms = m_pipeline->uniforms();
+        for (const auto& [name, value] : uniforms) {
+            auto location =
+                glGetUniformLocation(program->handler(), name.c_str());
+            if (const float* f = std::get_if<float>(&value)) {
+                glUniform1f(location, *f);
+            } else if (const int* i = std::get_if<int>(&value)) {
+                glUniform1i(location, *i);
+            } else if (const bool* b = std::get_if<bool>(&value)) {
+                glUniform1i(location, (int)*b);
+            } else if (const math::Vector2* v =
+                           std::get_if<math::Vector2>(&value)) {
+                glUniform2f(location, v->x, v->y);
+            } else if (const math::Vector3* v =
+                           std::get_if<math::Vector3>(&value)) {
+                glUniform3f(location, v->x, v->y, v->z);
+            } else if (const math::Vector4* v =
+                           std::get_if<math::Vector4>(&value)) {
+                glUniform4f(location, v->x, v->y, v->z, v->w);
+            } else if (const math::Matrix4x4* m =
+                           std::get_if<math::Matrix4x4>(&value)) {
+                glUniformMatrix4fv(location, 1, GL_TRUE, m->data());
+            } else {
+                log::error("Unsupported uniform value type");
+            }
+        }
 
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -76,7 +106,11 @@ export class DrawListOpenGL : public DrawList {
     }
 
     virtual void draw(size_t start, size_t count) {
-        glDrawArrays(convert_render_primitive(m_pipeline->render_primitive()), start, count);
+        glDrawArrays(
+            convert_render_primitive(m_pipeline->render_primitive()),
+            start,
+            count
+        );
         opengl_check_error();
     }
 
@@ -87,7 +121,18 @@ export class DrawListOpenGL : public DrawList {
         glGetIntegerv(GL_VIEWPORT, dims);
         auto width = dims[2];
         auto height = dims[3];
-        glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+        glBlitFramebuffer(
+            0,
+            0,
+            width,
+            height,
+            0,
+            0,
+            width,
+            height,
+            GL_COLOR_BUFFER_BIT,
+            GL_NEAREST
+        );
     }
 
   private:

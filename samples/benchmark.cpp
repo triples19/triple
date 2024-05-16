@@ -9,10 +9,10 @@ struct Object {
 };
 REFL(Object)
 
-constexpr size_t entity_count = 100000;
+constexpr size_t entity_count = 1000000;
 
 TEST_CASE("Benchmark") {
-    BENCHMARK_ADVANCED("ecs-1")
+    BENCHMARK_ADVANCED("ecs-system")
     (Catch::Benchmark::Chronometer meter) {
         using namespace triple;
         World world;
@@ -30,7 +30,7 @@ TEST_CASE("Benchmark") {
         });
     };
 
-    BENCHMARK_ADVANCED("ecs-2")
+    BENCHMARK_ADVANCED("ecs-archetype")
     (Catch::Benchmark::Chronometer meter) {
         using namespace triple;
         Archetype archetype(0, {&type<Object>()});
@@ -50,7 +50,7 @@ TEST_CASE("Benchmark") {
         });
     };
 
-    BENCHMARK_ADVANCED("normal-1")
+    BENCHMARK_ADVANCED("vector-pointer")
     (Catch::Benchmark::Chronometer meter) {
         std::vector<Object*> objs;
         objs.reserve(entity_count);
@@ -66,7 +66,7 @@ TEST_CASE("Benchmark") {
         });
     };
 
-    BENCHMARK_ADVANCED("normal-2")
+    BENCHMARK_ADVANCED("vector-contiguous")
     (Catch::Benchmark::Chronometer meter) {
         std::vector<Object> objs;
         objs.reserve(entity_count);

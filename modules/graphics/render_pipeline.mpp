@@ -1,10 +1,14 @@
 module;
+#include <string>
+#include <unordered_map>
+#include <variant>
 #include <vector>
 
 export module triple.graphics:render_pipeline;
 import :enums;
 import :program;
 import triple.base;
+import triple.math;
 
 namespace triple::graphics {
 
@@ -27,8 +31,18 @@ export struct RenderPipelineRasterizationState {
     float line_width {1.0};
 };
 
+export using UniformValue = std::variant<
+    float,
+    int,
+    bool,
+    math::Vector2,
+    math::Vector3,
+    math::Vector4,
+    math::Matrix4x4>;
+
 export struct RenderPipelineDescriptor {
     Program* program;
+    std::unordered_map<std::string, UniformValue> uniforms;
     VertexLayout vertex_layout;
     RenderPrimitive render_primitive;
     RenderPipelineRasterizationState rasterization_state;
@@ -37,7 +51,8 @@ export struct RenderPipelineDescriptor {
 export class RenderPipeline {
   public:
     RenderPipeline(const RenderPipelineDescriptor& desc) :
-        m_program(desc.program), m_vertex_layout(desc.vertex_layout),
+        m_program(desc.program), m_uniforms(desc.uniforms),
+        m_vertex_layout(desc.vertex_layout),
         m_render_primitive(desc.render_primitive) {}
     virtual ~RenderPipeline() = default;
 
@@ -45,11 +60,17 @@ export class RenderPipeline {
     void set_program(Program* p) { m_program = p; }
 
     const VertexLayout& vertex_layout() const { return m_vertex_layout; }
-
     RenderPrimitive render_primitive() const { return m_render_primitive; }
+    const std::unordered_map<std::string, UniformValue>& uniforms() const {
+        return m_uniforms;
+    }
+    void set_uniform(const std::string& name, const UniformValue& value) {
+        m_uniforms[name] = value;
+    }
 
   private:
     Program* m_program;
+    std::unordered_map<std::string, UniformValue> m_uniforms;
     VertexLayout m_vertex_layout;
     RenderPrimitive m_render_primitive;
 };

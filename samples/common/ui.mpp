@@ -12,6 +12,8 @@ export module samples.ui;
 import triple.all;
 using namespace triple;
 
+bool show_ui = false;
+
 void setup_imgui(Resource<Window> win) {
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
@@ -47,16 +49,27 @@ std::string get_components_name(const ComponentVector& components) {
     return name;
 }
 
-void update_imgui(Commands commands, Resource<Time> time) {
+void begin_imgui() {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
     ImGui::NewFrame();
+}
 
-    // ImGui::ShowDemoWindow();
+void update_imgui(
+    Commands commands,
+    Resource<KeyInput> key_input,
+    Resource<Time> time
+) {
+    if (key_input->just_pressed(KeyCode::I))
+        show_ui = !show_ui;
+    if (!show_ui)
+        return;
+
+    ImGui::ShowDemoWindow();
 
     {
         ImGui::Begin("Archetypes");
-        ImGui::Text(std::format("{}", 1.0f / time->delta()).c_str());
+        ImGui::Text(std::format("FPS: {}", 1.0f / time->delta()).c_str());
 
         World& world = commands.world();
         std::unordered_set<Archetype*> archetypes;
@@ -117,7 +130,7 @@ void update_imgui(Commands commands, Resource<Time> time) {
                                 );
                             else if (t.is(type<Color4F>()))
                                 str = std::format(
-                                    "{}, {}, {}, {}",
+                                    "{:.1f}, {:.1f}, {:.1f}, {:.1f}",
                                     val.value<Color4F>().r,
                                     val.value<Color4F>().g,
                                     val.value<Color4F>().b,
@@ -134,7 +147,9 @@ void update_imgui(Commands commands, Resource<Time> time) {
 
         ImGui::End();
     }
+}
 
+void end_imgui() {
     ImGui::Render();
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
@@ -143,6 +158,8 @@ export class UiPlugin : public Plugin {
   public:
     void setup(App& app) {
         app.add_system(StartUp, setup_imgui)
-            .add_system(RenderUpdate, update_imgui);
+            .add_system(RenderStart, begin_imgui)
+            .add_system(RenderUpdate, update_imgui)
+            .add_system(RenderEnd, end_imgui);
     }
 };

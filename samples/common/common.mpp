@@ -6,12 +6,23 @@ import triple.all;
 
 using namespace triple;
 
+void pause_system(Resource<KeyInput> key_input, Resource<Time> time) {
+    if (key_input->just_pressed(KeyCode::P)) {
+        if (time->time_scale == 0.0f) {
+            time->time_scale = 1.0f;
+        } else {
+            time->time_scale = 0.0f;
+        }
+    }
+}
+
 export class SamplesPlugin : public Plugin {
   public:
     void setup(App& app) {
         Cls::new_cls<Transform2D>()
             .add_member("position", &Transform2D::position)
-            .add_member("scale", &Transform2D::scale);
+            .add_member("scale", &Transform2D::scale)
+            .add_member("rotation", &Transform2D::rotation);
         Cls::new_cls<Camera>()
             .add_member("width", &Camera::width)
             .add_member("height", &Camera::height)
@@ -27,5 +38,14 @@ export class SamplesPlugin : public Plugin {
             std::filesystem::current_path().parent_path().parent_path() /
             "samples" / "assets";
         asset_server.set_assets_dir(assets_dir);
+        app.add_plugin<WindowPlugin>()
+            .add_plugin<OpenGLPlugin>()
+            .add_plugin<GraphicsPlugin>()
+            .add_plugin<RenderPlugin>()
+            .add_plugin<SpritePlugin>()
+            .add_plugin<DebugPlugin>()
+            .add_plugin<TimePlugin>()
+            .add_plugin<InputPlugin>()
+            .add_system(Update, pause_system);
     }
 };
