@@ -5,6 +5,8 @@ add_requires("catch2", "glfw", "stb", "box2d")
 add_requires("imgui", {configs = {glfw = true, opengl3 = true}})
 add_packages("glfw", "stb", "box2d")
 
+set_warnings("all")
+
 includes("thirdparty")
 includes("modules")
 includes("samples")

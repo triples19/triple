@@ -72,9 +72,8 @@ export class App {
     }
 
     template<class R>
-    App& add_resource(const R& resource) {
-        m_world.add_resource<R>();
-        *m_world.get_resource<R>() = resource;
+    App& add_resource(R&& resource) {
+        m_world.add_resource(resource);
         return *this;
     }
 

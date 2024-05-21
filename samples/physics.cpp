@@ -11,7 +11,15 @@ import triple.all;
 import samples.common;
 import samples.ui;
 
-b2Vec2 gravity {0.0f, -200.0f};
+b2Vec2 gravity {0.0f, -10.0f};
+float gravity_scale = 20.0f;
+float density = 1.0f;
+float friction = 0.3f;
+float restitution = 2.0f;
+
+b2Vec2 operator*(const b2Vec2& v, float s) {
+    return {v.x * s, v.y * s};
+}
 
 struct Physics {
     b2World world {gravity};
@@ -25,6 +33,9 @@ struct RigidBody {
 };
 REFL(RigidBody)
 REFL(b2Body)
+
+struct Ball {};
+REFL(Ball)
 
 void setup_scene(
     triple::Commands commands,
@@ -137,9 +148,9 @@ void gen_ball(
         dynamic_box.m_radius = 64.0f;
         b2FixtureDef fixture_def;
         fixture_def.shape = &dynamic_box;
-        fixture_def.density = 1.0f;
-        fixture_def.friction = 0.3f;
-        fixture_def.restitution = 2.0f;
+        fixture_def.density = density;
+        fixture_def.friction = friction;
+        fixture_def.restitution = restitution;
         body->CreateFixture(&fixture_def);
 
         auto get_random = []() -> float {
@@ -158,9 +169,57 @@ void gen_ball(
             },
             RigidBody {
                 .body = body,
-            }
+            },
+            Ball {}
         );
     }
+}
+
+void update_ui(
+    triple::Commands commands,
+    triple::Resource<Physics> physics,
+    triple::Query<Ball, RigidBody> q_balls
+) {
+    ImGui::Begin("Physics");
+
+    if (ImGui::Button("Clear Scene")) {
+        for (auto iter = q_balls.begin(); iter != q_balls.end(); ++iter) {
+            RigidBody& rb = iter.get<RigidBody>();
+            physics->world.DestroyBody(rb.body);
+            commands.entity(iter.entity()).despawn();
+        }
+    }
+
+    if (ImGui::SliderFloat2("Gravity", &gravity.x, -100.0f, 100.0f)) {
+        physics->world.SetGravity(gravity * gravity_scale);
+    }
+
+    if (ImGui::SliderFloat("Density", &density, 0.0f, 1.0f)) {
+        for (auto iter = q_balls.begin(); iter != q_balls.end(); ++iter) {
+            auto& rb = iter.get<RigidBody>();
+            b2Fixture* fixture = rb.body->GetFixtureList();
+            fixture->SetDensity(density);
+            rb.body->ResetMassData();
+        }
+    }
+
+    if (ImGui::SliderFloat("Friction", &friction, 0.0f, 1.0f)) {
+        for (auto iter = q_balls.begin(); iter != q_balls.end(); ++iter) {
+            auto& rb = iter.get<RigidBody>();
+            b2Fixture* fixture = rb.body->GetFixtureList();
+            fixture->SetFriction(friction);
+        }
+    }
+
+    if (ImGui::SliderFloat("Restitution", &restitution, 0.0f, 10.0f)) {
+        for (auto iter = q_balls.begin(); iter != q_balls.end(); ++iter) {
+            auto& rb = iter.get<RigidBody>();
+            b2Fixture* fixture = rb.body->GetFixtureList();
+            fixture->SetRestitution(restitution);
+        }
+    }
+
+    ImGui::End();
 }
 
 int main() {
@@ -173,10 +232,13 @@ int main() {
     App app;
     app.add_plugin<SamplesPlugin>()
         .add_plugin<UiPlugin>()
-        .add_resource<Physics>(Physics {.world = b2World(gravity)})
+        .add_resource<Physics>(
+            Physics {.world = b2World(gravity * gravity_scale)}
+        )
         .add_system(StartUp, setup_scene)
         .add_system(Update, update_physics)
         .add_system(Update, gen_ball)
+        .add_system(RenderUpdate, update_ui)
         .run();
     exit(0);
     return 0;

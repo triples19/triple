@@ -13,19 +13,20 @@ import samples.common;
 
 using namespace triple;
 
-constexpr float player_speed = 1000.0f;
+constexpr float player_init_speed = 1000.0f;
 constexpr float player_shoot_cooldown = 0.3f;
 constexpr float player_bullet_speed = 1000.0f;
-constexpr float enemy_speed_min = 300.0f;
-constexpr float enemy_speed_max = 400.0f;
+float enemy_speed_min = 300.0f;
+float enemy_speed_max = 400.0f;
 constexpr float enemy_spawn_cooldown = 0.5f;
 constexpr float enemy_shoot_cooldown = 1.2f;
 constexpr float enemy_bullet_speed = 500.0f;
 constexpr int player_init_health = 3;
 constexpr int enemy_init_health = 2;
 
-float global_scale = 3.0f;
+Vector2 global_scale = {3.5f, 3.5f};
 bool show_debug = false;
+bool paused = false;
 
 struct BoxCollider {
     Vector2 size;
@@ -68,8 +69,8 @@ struct Bullet {
 REFL(Bullet)
 
 struct Game {
-    float enemy_spawn_timer {0.0f};
-    int score {0};
+    Timer enemy_spawn_timer;
+    int score;
 };
 REFL(Game)
 
@@ -156,9 +157,18 @@ void setup_scene(
         }
     );
     commands.spawn().add(
+        Sprite {
+            .texture = asset_server->load<Texture2D>("plane/map.png"),
+        },
+        Transform2D {
+            .position = {0.0f, 0.0f},
+            .scale = {3.5f, 3.5f},
+        }
+    );
+    commands.spawn().add(
         Player {
             .shoot_timer = Timer(player_shoot_cooldown, TimerMode::Repeating),
-            .speed = player_speed,
+            .speed = player_init_speed,
             .health = player_init_health,
         },
         Sprite {
@@ -226,7 +236,7 @@ void player_shoot(
                 .tag = Bullet::Player,
             },
             Sprite {
-                .texture = asset_server->load<Texture2D>("bullet_0.png"),
+                .texture = asset_server->load<Texture2D>("bullet_2.png"),
             },
             Transform2D {
                 .position = transform.position,
@@ -264,7 +274,8 @@ void spawn_enemy(
     Resource<Game> game,
     Resource<Window> win
 ) {
-    while (game->enemy_spawn_timer > enemy_spawn_cooldown) {
+    game->enemy_spawn_timer.tick(time->delta());
+    if (game->enemy_spawn_timer.just_finished()) {
         commands.spawn().add(
             Enemy {
                 .speed = (float)random(enemy_speed_min, enemy_speed_max),
@@ -287,9 +298,7 @@ void spawn_enemy(
                 .offset = {0.0f, 0.0f},
             }
         );
-        game->enemy_spawn_timer -= enemy_spawn_cooldown;
     }
-    game->enemy_spawn_timer += time->delta();
 }
 
 void update_enemy(
@@ -330,7 +339,7 @@ void update_enemy(
                     .tag = Bullet::Enemy,
                 },
                 Sprite {
-                    .texture = asset_server->load<Texture2D>("bullet_1.png"),
+                    .texture = asset_server->load<Texture2D>("bullet_0.png"),
                 },
                 Transform2D {
                     .position =
@@ -360,8 +369,45 @@ void update_ui(
 
     ImGui::Text("Score: %d", game->score);
     ImGui::Text("Health: %d", player.health);
-    if (ImGui::Button("Show Debug")) {
-        show_debug = !show_debug;
+    if (ImGui::CollapsingHeader("Settings")) {
+        if (show_debug && ImGui::Button("Hide Debug") ||
+            !show_debug && ImGui::Button("Show Debug")) {
+            show_debug = !show_debug;
+        }
+        if (paused && ImGui::Button("Resume") ||
+            !paused && ImGui::Button("Pause")) {
+            paused = !paused;
+            time->time_scale = paused ? 0.0f : 1.0f;
+        }
+
+        ImGui::SeparatorText("Player");
+        ImGui::SliderFloat2(
+            "Position",
+            &transform.position.x,
+            -2000.0f,
+            2000.0f
+        );
+        ImGui::SliderInt("Health", &player.health, 0, 10);
+        ImGui::SliderFloat("Speed", &player.speed, 0.0f, 2000.0f);
+        ImGui::SliderFloat(
+            "Shoot Cooldown",
+            &player.shoot_timer.duration,
+            0.0f,
+            1.0f
+        );
+
+        ImGui::SeparatorText("Enemy");
+        ImGui::SliderFloat("Speed Min", &enemy_speed_min, 0.0f, 1000.0f);
+        ImGui::SliderFloat("Speed Max", &enemy_speed_max, 0.0f, 1000.0f);
+        ImGui::SliderFloat(
+            "Spawn Cooldown",
+            &game->enemy_spawn_timer.duration,
+            0.0f,
+            1.0f
+        );
+
+        ImGui::SeparatorText("Game");
+        ImGui::SliderInt("Score", &game->score, 0, 100);
     }
 
     // if (ImGui::CollapsingHeader("Player")) {
@@ -417,7 +463,10 @@ int main() {
     app.add_plugin<SamplesPlugin>()
         .add_plugin<UiPlugin>()
         .add_event<CollideEvent>()
-        .add_resource<Game>()
+        .add_resource<Game>(Game {
+            .enemy_spawn_timer = {enemy_spawn_cooldown, TimerMode::Repeating},
+            .score = 0
+        })
         .add_system(StartUp, setup_scene)
         .add_system(Update, check_bullet_collide)
         .add_system(Update, draw_debug)

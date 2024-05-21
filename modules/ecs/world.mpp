@@ -221,9 +221,15 @@ export class World {
     template<class R>
     void add_resource() {
         using RawR = std::remove_cvref_t<R>;
-        log::trace("Adding resource: {}", refl::type<R>().name());
-        // m_resources[refl::type<R>().id()] = R {};
+        log::trace("Adding resource: {}", refl::type<RawR>().name());
         m_resources.emplace(refl::type<R>().id(), R {});
+    }
+
+    template<class R>
+    void add_resource(R&& resource) {
+        using RawR = std::remove_cvref_t<R>;
+        log::trace("Adding resource: {}", refl::type<RawR>().name());
+        m_resources.emplace(refl::type<RawR>().id(), std::forward<R>(resource));
     }
 
     GenericResource get_resource(const refl::Type& resource_type) {
