@@ -65,7 +65,7 @@ void update_imgui(
     if (!show_ui)
         return;
 
-    ImGui::ShowDemoWindow();
+    // ImGui::ShowDemoWindow();
 
     {
         ImGui::Begin("Archetypes");

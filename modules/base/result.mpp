@@ -1,0 +1,13 @@
+module;
+export module triple.base:result;
+
+namespace triple::base {
+
+export template<class T, class E>
+class Result {
+  public:
+    using value_type = T;
+    using error_type = E;
+};
+
+} // namespace triple::base

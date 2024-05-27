@@ -82,9 +82,12 @@ void register_types() {
         .add_member("entity_a", &CollideEvent::entity_a)
         .add_member("entity_b", &CollideEvent::entity_b);
     Cls::new_cls<Player>()
-        .add_member("shoot_timer", &Player::shoot_timer)
-        .add_member("speed", &Player::speed);
-    Cls::new_cls<Enemy>().add_member("speed", &Enemy::speed);
+        // .add_member("shoot_timer", &Player::shoot_timer)
+        .add_member("speed", &Player::speed)
+        .add_member("health", &Player::health);
+    Cls::new_cls<Enemy>()
+        .add_member("speed", &Enemy::speed)
+        .add_member("health", &Enemy::health);
     Cls::new_cls<Bullet>().add_member("speed", &Bullet::speed);
 }
 
