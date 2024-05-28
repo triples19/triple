@@ -1,5 +1,4 @@
 module;
-#include "refl_macros.hpp"
 #include <cstdint>
 #include <filesystem>
 #include <format>
@@ -162,5 +161,3 @@ export class AssetPlugin : public app::Plugin {
 };
 
 } // namespace triple::app
-
-REFL(triple::app::AssetServer)

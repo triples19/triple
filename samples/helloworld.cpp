@@ -3,6 +3,10 @@
 
 import triple.all;
 
+struct Obj {
+    int x;
+};
+
 int main() {
     using namespace triple;
 
@@ -12,6 +16,8 @@ int main() {
             StartUp,
             +[]() {
                 log::info("Hello World!");
+                log::info("{}", type<Obj>().name());
+                log::info("{}", type<Obj>().size());
             }
         )
         .add_system(

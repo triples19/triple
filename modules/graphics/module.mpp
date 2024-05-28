@@ -14,7 +14,6 @@ export import :program;
 export import :render_pipeline;
 export import :shader;
 export import :texture2d;
-export import :types;
 
 import triple.base;
 import triple.app;

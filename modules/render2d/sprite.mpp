@@ -1,5 +1,4 @@
 module;
-#include "refl_macros.hpp"
 #include <array>
 #include <vector>
 
@@ -182,6 +181,3 @@ export class SpritePlugin : public Plugin {
 };
 
 } // namespace triple::render2d
-
-REFL(triple::render2d::Sprite)
-REFL(triple::render2d::SpriteRendererResource)

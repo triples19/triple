@@ -3,8 +3,6 @@ module;
 #include <GLFW/glfw3.h>
 #include <map>
 
-#include "refl_macros.hpp"
-
 export module triple.window:input;
 import triple.ecs;
 import triple.app;
@@ -121,9 +119,6 @@ export class MouseInput {
 };
 
 } // namespace triple::window
-REFL(triple::window::KeyEvent)
-REFL(triple::window::KeyInput)
-REFL(triple::window::MouseInput)
 
 namespace triple::window {
 

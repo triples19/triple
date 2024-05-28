@@ -2,8 +2,6 @@ module;
 #include <cstdint>
 #include <tuple>
 
-#include "refl_macros.hpp"
-
 export module triple.math:color;
 import triple.refl;
 
@@ -63,5 +61,3 @@ const Color4F Color4F::Orange {1, 0.5f, 0, 1};
 const Color4F Color4F::Gray {0.65f, 0.65f, 0.65f, 1};
 
 } // namespace triple::math
-
-REFL(triple::math::Color4F)

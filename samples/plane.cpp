@@ -1,6 +1,3 @@
-#define NOMODULE
-#include "refl_macros.hpp"
-
 #include "imgui.h"
 
 #include <cassert>
@@ -40,39 +37,33 @@ struct BoxCollider {
         };
     }
 };
-REFL(BoxCollider)
 
 struct CollideEvent {
     Entity entity_a;
     Entity entity_b;
 };
-REFL(CollideEvent)
 
 struct Player {
     Timer shoot_timer;
     float speed;
     int health;
 };
-REFL(Player)
 
 struct Enemy {
     float speed;
     int health;
     Timer shoot_timer;
 };
-REFL(Enemy)
 
 struct Bullet {
     Vector2 speed;
     enum Tag { Player, Enemy } tag;
 };
-REFL(Bullet)
 
 struct Game {
     Timer enemy_spawn_timer;
     int score;
 };
-REFL(Game)
 
 void register_types() {
     Cls::new_cls<BoxCollider>()

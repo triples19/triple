@@ -1,5 +1,4 @@
 module;
-#include "refl_macros.hpp"
 #include <GLFW/glfw3.h>
 
 export module triple.render2d:render;
@@ -85,5 +84,3 @@ export class RenderPlugin : public Plugin {
 };
 
 } // namespace triple::render2d
-
-REFL(triple::render2d::RenderResource)

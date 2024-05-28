@@ -3,16 +3,12 @@
 #include <string>
 using namespace std::string_literals;
 
-#define NOMODULE
-#include "refl_macros.hpp"
-
 import triple.refl;
 import triple.base;
 
 struct Obj {
     int a;
 };
-REFL(Obj)
 
 TEST_CASE("", "") {
     using namespace triple;

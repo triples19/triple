@@ -158,13 +158,15 @@ class Query {
             return *this;
         }
 
-        bool operator==(Iterator& other) const {
+        bool operator==(const Iterator& other) const {
             return m_query == other.m_query &&
                    m_archetype_index == other.m_archetype_index &&
                    m_entity_index == other.m_entity_index;
         }
 
-        bool operator!=(Iterator& other) const { return !(*this == other); }
+        bool operator!=(const Iterator& other) const {
+            return !(*this == other);
+        }
 
       private:
         void update_pointers() {

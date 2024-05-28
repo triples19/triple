@@ -4,9 +4,6 @@
 #include "box2d/box2d.h"
 #include "imgui.h"
 
-#define NOMODULE
-#include "refl_macros.hpp"
-
 import triple.all;
 import samples.common;
 import samples.ui;
@@ -24,18 +21,13 @@ b2Vec2 operator*(const b2Vec2& v, float s) {
 struct Physics {
     b2World world {gravity};
 };
-REFL(Physics)
-REFL(b2World)
 
 struct RigidBody {
     b2Body* body {nullptr};
     bool initialized {false};
 };
-REFL(RigidBody)
-REFL(b2Body)
 
 struct Ball {};
-REFL(Ball)
 
 void setup_scene(
     triple::Commands commands,

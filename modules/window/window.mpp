@@ -2,8 +2,6 @@ module;
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-#include "refl_macros.hpp"
-
 #include <stdexcept>
 #include <string>
 
@@ -76,5 +74,3 @@ export class WindowPlugin : public app::Plugin {
 };
 
 } // namespace triple::window
-
-REFL(triple::window::Window)

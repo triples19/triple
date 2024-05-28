@@ -44,7 +44,7 @@ std::string get_components_name(const ComponentVector& components) {
     using namespace std::string_literals;
     std::string name = "";
     for (auto* component : components) {
-        name += component->name() + ", "s;
+        name += (std::string)component->name() + ", "s;
     }
     return name;
 }

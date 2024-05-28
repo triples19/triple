@@ -1,5 +1,4 @@
 module;
-#include "refl_macros.hpp"
 
 export module triple.core:transform;
 import triple.math;
@@ -19,5 +18,3 @@ export struct Transform2D {
 };
 
 } // namespace triple::core
-
-REFL(triple::core::Transform2D)

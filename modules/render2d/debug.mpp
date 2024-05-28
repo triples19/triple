@@ -1,5 +1,4 @@
 module;
-#include "refl_macros.hpp"
 #include <vector>
 
 export module triple.render2d:debug;
@@ -171,5 +170,3 @@ export class DebugPlugin : public app::Plugin {
 };
 
 }; // namespace triple::render2d
-
-REFL(triple::render2d::Debug)

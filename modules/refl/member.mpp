@@ -7,7 +7,6 @@ import :type_of;
 import :ref;
 import :var;
 import :utils;
-import :builtin_types;
 
 namespace triple::refl {
 

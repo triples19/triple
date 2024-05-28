@@ -1,5 +1,3 @@
-#define NOMODULE
-#include "refl_macros.hpp"
 #include <catch2/catch_all.hpp>
 #include <vector>
 import triple.all;
@@ -7,7 +5,6 @@ import triple.all;
 struct Object {
     int x;
 };
-REFL(Object)
 
 constexpr size_t entity_count = 1000000;
 

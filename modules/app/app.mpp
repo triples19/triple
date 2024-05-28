@@ -1,5 +1,4 @@
 module;
-#include "refl_macros.hpp"
 #include <cstdint>
 
 export module triple.app:app;
@@ -118,5 +117,3 @@ export class App {
 };
 
 } // namespace triple::app
-
-REFL(triple::app::AppStates)

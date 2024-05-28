@@ -1,5 +1,4 @@
 module;
-#include "refl_macros.hpp"
 #include <chrono>
 
 export module triple.core:time;
@@ -68,9 +67,6 @@ void time_system(ecs::Resource<Time> time) {
 }
 
 } // namespace triple::core
-
-REFL(triple::core::Time)
-REFL(triple::core::Timer)
 
 namespace triple::core {
 export class TimePlugin : public app::Plugin {

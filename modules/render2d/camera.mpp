@@ -1,5 +1,4 @@
 module;
-#include "refl_macros.hpp"
 
 export module triple.render2d:camera;
 import triple.math;
@@ -17,5 +16,3 @@ export struct Camera {
 };
 
 } // namespace triple::render2d
-
-REFL(triple::render2d::Camera)
