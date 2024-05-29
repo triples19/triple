@@ -15,58 +15,13 @@ import :entity;
 import :archetype;
 import :utils;
 
+// Not including <tuple> in user code causing a bug in MSVC (error C3643)
+export import <tuple>;
+
 namespace triple::ecs {
 
 export class GenericQuery {
     friend class World;
-
-  public:
-    class QueryInfo {
-      public:
-    };
-
-    // class Iterator {
-    //   public:
-    //     Iterator(GenericQuery* q, size_t archetype_index, size_t
-    //     entity_index) :
-    //         m_query(q), m_archetype_index(archetype_index),
-    //         m_entity_index(entity_index) {}
-
-    //     refl::Ref get(const refl::Type& type) {
-    //         Archetype* archetype = m_query->matched()[m_archetype_index];
-    //         auto iter = std::ranges::find(m_query->components(), &type);
-    //         if (iter == archetype->m_components.end()) {
-    //             log::error("Iterator::get: type mismatch");
-    //             return nullptr;
-    //         }
-    //         Entity entity = archetype->entities()[m_entity_index];
-    //         return refl::Ref(archetype->get_component(entity, type), type);
-    //     }
-
-    //     template<class T>
-    //     T& get() {
-    //         return get(refl::type<T>()).value<T>();
-    //     }
-
-    //     bool next() {
-    //         m_entity_index++;
-    //         if (m_entity_index ==
-    //             m_query->matched()[m_archetype_index]->size()) {
-    //             m_entity_index = 0;
-    //             m_archetype_index++;
-    //         }
-    //         return m_archetype_index != m_query->matched().size();
-    //     }
-
-    //     operator bool() const {
-    //         return m_archetype_index != m_query->matched().size();
-    //     }
-
-    //   private:
-    //     GenericQuery* m_query;
-    //     size_t m_archetype_index;
-    //     size_t m_entity_index;
-    // };
 
   public:
     GenericQuery(ComponentVector components) : m_components(components) {
@@ -111,7 +66,8 @@ class Query {
     struct Iterator {
         using iterator_category = std::forward_iterator_tag;
         using difference_type = std::ptrdiff_t;
-        using value_type = std::tuple<Args&...>;
+        using value_type = std::tuple<
+            std::conditional_t<std::is_same_v<Args, Entity>, Args, Args&>...>;
         using pointer = value_type*;
         using reference = value_type&;
 
@@ -123,10 +79,14 @@ class Query {
 
         template<class T>
         T& get() const {
-            return *static_cast<T*>(m_archetype->get_component(
-                m_archetype->entities()[m_entity_index],
-                refl::type<T>()
-            ));
+            if constexpr (std::is_same_v<T, Entity>) {
+                return entity();
+            } else {
+                return *static_cast<T*>(m_archetype->get_component(
+                    m_archetype->entities()[m_entity_index],
+                    refl::type<T>()
+                ));
+            }
         }
 
         Entity entity() const {
@@ -136,16 +96,30 @@ class Query {
         Archetype& archetype() const { return *m_archetype; }
 
         value_type operator*() const {
-            return {*static_cast<Args*>(
-                m_pointers[index_in_args<Args, Args...>()]
-            )...};
+            // return {*static_cast<Args*>(
+            //     m_pointers[index_in_args<Args, Args...>()]
+            // )...};
+            return std::forward_as_tuple([&]() -> decltype(auto) {
+                if constexpr (std::is_same_v<Args, Entity>) {
+                    return entity();
+                } else {
+                    return *static_cast<Args*>(
+                        m_pointers[index_in_args<Args, Args...>()]
+                    );
+                }
+            }()...);
         }
 
         Iterator& operator++() {
             m_entity_index++;
             [&]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
-                ((m_pointers[ArgIdx] =
-                      static_cast<char*>(m_pointers[ArgIdx]) + sizeof(Args)),
+                ((std::is_same_v<
+                      std::tuple_element_t<ArgIdx, value_type>,
+                      Entity> ?
+                      (void*)0 :
+                      m_pointers[ArgIdx] =
+                          static_cast<char*>(m_pointers[ArgIdx]) + sizeof(Args)
+                 ),
                  ...);
             }(std::make_index_sequence<sizeof...(Args)>());
             while (m_entity_index == m_archetype->size()) {
@@ -172,10 +146,14 @@ class Query {
         void update_pointers() {
             if (m_archetype_index != m_query->matched().size()) {
                 m_archetype = m_query->matched()[m_archetype_index];
-                m_pointers = {m_archetype->get_component(
-                    m_archetype->get_column_index(refl::type<Args>()),
-                    0
-                )...};
+                m_pointers = {
+                    (std::is_same_v<Args, Entity> ?
+                         (void*)0 :
+                         m_archetype->get_component(
+                             m_archetype->get_column_index(refl::type<Args>()),
+                             0
+                         ))...
+                };
             }
         }
 
@@ -190,11 +168,20 @@ class Query {
         // maybe check types
     }
 
-    static size_t hash() {
-        return TypeVectorHasher {}({&refl::type<Args>()...});
-    }
+    static size_t hash() { return TypeVectorHasher {}(components()); }
 
-    static ComponentVector components() { return {&refl::type<Args>()...}; }
+    static const ComponentVector& components() {
+        static ComponentVector components;
+        static bool initialized = false;
+        if (!initialized) {
+            components = {&refl::type<Args>()...};
+            // TODO: do this at compile time?
+            std::erase(components, &refl::type<Entity>());
+            std::ranges::sort(components);
+            initialized = true;
+        }
+        return components;
+    }
 
     const std::vector<Archetype*>& matched() const { return m_query.matched(); }
 
