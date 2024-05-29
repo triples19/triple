@@ -119,6 +119,9 @@ void render_sprite(
     Query<Sprite, Transform2D> q_sprite,
     Query<Camera, Transform2D> q_camera
 ) {
+    if (q_camera.empty()) {
+        return;
+    }
     auto* device = render_res->device;
     auto* draw_list = render_res->draw_list;
     auto& camera = q_camera.iter().get<Camera>();

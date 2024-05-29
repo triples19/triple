@@ -106,6 +106,8 @@ void draw_line_update(
     Resource<RenderResource> render,
     Query<Camera, Transform2D> q_camera
 ) {
+    if (q_camera.empty())
+        return;
     using namespace graphics;
     using namespace math;
     auto* device = render->device;
