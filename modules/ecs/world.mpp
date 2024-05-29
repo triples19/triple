@@ -9,6 +9,7 @@ module;
 
 export module triple.ecs:world;
 import triple.refl;
+import triple.base;
 import :entity;
 import :event;
 import :archetype;
@@ -87,14 +88,20 @@ export class World {
         return *s;
     }
 
-    template<class... Args>
-    System& system(void (*F)(Args...)) {
-        return system().add_params<Args...>().callback(F);
+    template<class F>
+    System& system(F f) {
+        using trait = function_traits<F>;
+        auto& sys = system();
+        [&]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
+            sys.add_params<trait::template arg_type<ArgIdx>...>();
+        }(std::make_index_sequence<trait::arg_size>());
+        sys.callback(f);
+        return sys;
     }
 
-    template<class... Args>
-    SystemId add_system(ScheduleId schedule, void (*F)(Args...)) {
-        System& s = system(F);
+    template<class F>
+    SystemId add_system(ScheduleId schedule, F f) {
+        System& s = system(f);
         get_schedule(schedule).add_system(s.id());
         return s.id();
     }

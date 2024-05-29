@@ -1,4 +1,5 @@
 module;
+#include <tuple>
 #include <type_traits>
 
 export module triple.base:type_traits;
@@ -14,7 +15,37 @@ struct is_specialization_impl<Template<Args...>, Template> : std::true_type {};
 export template<class T, template<class...> class Template>
 concept is_specialization = is_specialization_impl<T, Template>::value;
 
-template<class T, class... Ts>
+export template<class T, class... Ts>
 concept is_any_of = (std::is_same_v<T, Ts> || ...);
+
+export template<typename T>
+struct function_traits : public function_traits<decltype(&T::operator())> {};
+
+export template<typename ClassType, typename ReturnType, typename... Args>
+struct function_traits<ReturnType (ClassType::*)(Args...) const> {
+    using return_type = ReturnType;
+    constexpr static auto arg_size = sizeof...(Args);
+
+    template<size_t i>
+    using arg_type = typename std::tuple_element<i, std::tuple<Args...>>::type;
+};
+
+export template<typename ReturnType, typename... Args>
+struct function_traits<ReturnType(Args...)> {
+    using return_type = ReturnType;
+    constexpr static auto arg_size = sizeof...(Args);
+
+    using args_tuple = std::tuple<Args...>;
+    template<size_t i>
+    using arg_type = typename std::tuple_element<i, std::tuple<Args...>>::type;
+};
+
+export template<typename ReturnType, typename... Args>
+struct function_traits<ReturnType (*)(Args...)>
+    : public function_traits<ReturnType(Args...)> {};
+
+export template<typename ReturnType, typename... Args>
+struct function_traits<ReturnType (*&)(Args...)>
+    : public function_traits<ReturnType(Args...)> {};
 
 } // namespace triple

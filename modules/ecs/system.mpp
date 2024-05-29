@@ -53,10 +53,22 @@ export class System {
         return *this;
     }
 
-    template<class... Args>
-    System& callback(void (*F)(Args...)) {
-        m_callback = [F](SystemCommands& commands) {
-            F(commands.get_param<Args>()...); //
+    template<class F>
+    System& callback(F f) {
+        using trait = function_traits<F>;
+        m_callback = [f, this](SystemCommands& commands) {
+            [f,
+             &commands,
+             this]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
+                if constexpr (std::is_same_v<trait::return_type, void>) {
+                    f(commands.get_param<trait::template arg_type<ArgIdx>>()...
+                    );
+                } else {
+                    this->m_out =
+                        f(commands.get_param<trait::template arg_type<ArgIdx>>(
+                        )...);
+                }
+            }(std::make_index_sequence<trait::arg_size>());
         };
         return *this;
     }
@@ -105,6 +117,8 @@ export class System {
 
     void run() { m_callback(m_commands); }
 
+    refl::Ref get_output() { return m_out; }
+
     SystemId id() const { return m_id; }
 
     World& world() { return m_world; }
@@ -114,6 +128,7 @@ export class System {
     SystemId m_id;
     Callback m_callback;
     SystemCommands m_commands;
+    refl::Ref m_out;
     std::unordered_map<std::string, GenericQuery*> m_queries;
     std::unordered_map<refl::TypeId, GenericEventReader> m_event_readers;
     std::unordered_map<refl::TypeId, GenericEventWriter> m_event_writers;
