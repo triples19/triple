@@ -51,17 +51,12 @@ export class Type {
             return false;
     }
 
-    // template<class T>
-    // bool is() const {
-    //     return is(type<T>());
-    // }
-
     std::string_view name() const {
-        // const char* last_simicolon = strrchr(m_name, ':');
-        // if (last_simicolon != nullptr)
-        //     return last_simicolon + 1;
-        // else
-        return m_name;
+        auto last_colon = m_name.find_last_of(':');
+        if (last_colon != std::string_view::npos)
+            return m_name.substr(last_colon + 1);
+        else
+            return m_name;
     }
 
     std::string_view full_name() const { return m_name; }
