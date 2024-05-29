@@ -77,8 +77,6 @@ export class GenericQuery {
     std::size_t hash() const { return m_hash; }
 
     bool matches(Archetype* archetype) {
-        if (archetype->components().size() == 0)
-            return false;
         for (auto component : m_components) {
             if (std::ranges::find(archetype->components(), component) ==
                 archetype->components().end()) {
@@ -135,6 +133,8 @@ class Query {
             return m_archetype->entities()[m_entity_index];
         }
 
+        Archetype& archetype() const { return *m_archetype; }
+
         value_type operator*() const {
             return {*static_cast<Args*>(
                 m_pointers[index_in_args<Args, Args...>()]
@@ -179,8 +179,6 @@ class Query {
             }
         }
 
-        const size_t c_sizes[sizeof...(Args)] = {sizeof(Args)...};
-
         Query* m_query;
         size_t m_archetype_index;
         size_t m_entity_index;
@@ -199,6 +197,12 @@ class Query {
     static ComponentVector components() { return {&refl::type<Args>()...}; }
 
     const std::vector<Archetype*>& matched() const { return m_query.matched(); }
+
+    bool empty() const {
+        return std::ranges::all_of(matched(), [](Archetype* archetype) {
+            return archetype->size() == 0;
+        });
+    }
 
     Iterator iter() { return begin(); }
 
