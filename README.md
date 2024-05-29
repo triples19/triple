@@ -62,7 +62,7 @@ First, follow the instructions to install [xmake](https://github.com/xmake-io/xm
 Once xmake is ready, simply clone the repository and run xmake. Dependencies will be downloaded and installed automatically by xmake.
 
 ```
-git clone https://github.com/Trip1eS/triple.git
+git clone https://github.com/triples19/triple.git
 cd triple
 xmake
 ```
