@@ -32,6 +32,7 @@ export class GenericHandle {
 export template<class T>
 class Handle : public GenericHandle {
   public:
+    Handle() : GenericHandle(refl::type<T>(), 0) {}
     Handle(HandleId id) : GenericHandle(refl::type<T>(), id) {}
 };
 
