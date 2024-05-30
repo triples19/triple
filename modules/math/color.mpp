@@ -3,7 +3,6 @@ module;
 #include <tuple>
 
 export module triple.math:color;
-import triple.refl;
 
 namespace triple::math {
 

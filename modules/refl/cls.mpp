@@ -1,18 +1,23 @@
 module;
+#include <format>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
 
 export module triple.refl:cls;
 import triple.base;
+import triple.math;
 import :member;
 import :type;
 import :type_of;
+import :ref;
 
 namespace triple::refl {
 
 export class Cls {
   public:
+    using ToStringFunc = std::string (*)(Ref);
+
     static std::unordered_map<TypeId, Cls> s_classes;
     template<class T>
     static Cls& new_cls() {
@@ -45,25 +50,174 @@ export class Cls {
         return m_members;
     }
 
+    Cls& set_to_string(ToStringFunc to_string) {
+        m_to_string = to_string;
+        return *this;
+    }
+
+    std::string to_string(Ref ref) const {
+        if (m_to_string) {
+            return m_to_string(ref);
+        }
+        return std::string(m_type.name());
+    }
+
   private:
     const Type& m_type;
     std::unordered_map<std::string, Member*> m_members;
+    ToStringFunc m_to_string;
 };
 
 std::unordered_map<TypeId, Cls> Cls::s_classes {};
 
-export template<class T>
-Cls& cls() {
-    auto iter = Cls::s_classes.find(type<T>().id());
-    return iter->second;
+void init_builtin_types() {
+    Cls::new_cls<void>();
+    Cls::new_cls<bool>().set_to_string(+[](Ref ref) {
+        bool value = ref.value<bool>();
+        return std::string(value ? "true" : "false");
+    });
+    Cls::new_cls<std::string>().set_to_string(+[](Ref ref) {
+        return ref.value<std::string>();
+    });
+    auto add_cls = []<class T> {
+        auto& c = Cls::new_cls<T>();
+        if constexpr (std::is_arithmetic_v<T>) {
+            c.set_to_string(+[](Ref ref) {
+                return std::to_string(ref.value<T>());
+            });
+        }
+    };
+    auto add_clses = [&]<class... Ts> {
+        (add_cls.template operator()<Ts>(), ...);
+    };
+    add_clses.template operator(
+    )<int,
+      unsigned int,
+      long,
+      unsigned long,
+      long long,
+      unsigned long long,
+      float,
+      double,
+      long double,
+      char,
+      unsigned char,
+      short,
+      unsigned short>();
+
+    Cls::new_cls<math::Color3B>()
+        .add_member("r", &math::Color3B::r)
+        .add_member("g", &math::Color3B::g)
+        .add_member("b", &math::Color3B::b)
+        .set_to_string(+[](Ref ref) {
+            auto& c = ref.value<math::Color3B>();
+            return std::format("({}, {}, {})", c.r, c.g, c.b);
+        });
+
+    Cls::new_cls<math::Color4B>()
+        .add_member("r", &math::Color4B::r)
+        .add_member("g", &math::Color4B::g)
+        .add_member("b", &math::Color4B::b)
+        .add_member("a", &math::Color4B::a)
+        .set_to_string(+[](Ref ref) {
+            auto& c = ref.value<math::Color4B>();
+            return std::format("({}, {}, {}, {})", c.r, c.g, c.b, c.a);
+        });
+
+    Cls::new_cls<math::Color4F>()
+        .add_member("r", &math::Color4F::r)
+        .add_member("g", &math::Color4F::g)
+        .add_member("b", &math::Color4F::b)
+        .add_member("a", &math::Color4F::a)
+        .set_to_string(+[](Ref ref) {
+            auto& c = ref.value<math::Color4F>();
+            return std::format("({}, {}, {}, {})", c.r, c.g, c.b, c.a);
+        });
+
+    Cls::new_cls<math::Vector2>()
+        .add_member("x", &math::Vector2::x)
+        .add_member("y", &math::Vector2::y)
+        .set_to_string(+[](Ref ref) {
+            auto& v = ref.value<math::Vector2>();
+            return std::format("({}, {})", v.x, v.y);
+        });
+
+    Cls::new_cls<math::Vector3>()
+        .add_member("x", &math::Vector3::x)
+        .add_member("y", &math::Vector3::y)
+        .add_member("z", &math::Vector3::z)
+        .set_to_string(+[](Ref ref) {
+            auto& v = ref.value<math::Vector3>();
+            return std::format("({}, {}, {})", v.x, v.y, v.z);
+        });
+
+    Cls::new_cls<math::Vector4>()
+        .add_member("x", &math::Vector4::x)
+        .add_member("y", &math::Vector4::y)
+        .add_member("z", &math::Vector4::z)
+        .add_member("w", &math::Vector4::w)
+        .set_to_string(+[](Ref ref) {
+            auto& v = ref.value<math::Vector4>();
+            return std::format("({}, {}, {}, {})", v.x, v.y, v.z, v.w);
+        });
+
+    Cls::new_cls<math::Matrix3x3>().set_to_string(+[](Ref ref) {
+        auto& m = ref.value<math::Matrix3x3>();
+        return std::format(
+            "({}, {}, {}\n {}, {}, {}\n {}, {}, {})",
+            m.mat[0][0],
+            m.mat[0][1],
+            m.mat[0][2],
+            m.mat[1][0],
+            m.mat[1][1],
+            m.mat[1][2],
+            m.mat[2][0],
+            m.mat[2][1],
+            m.mat[2][2]
+        );
+    });
+
+    Cls::new_cls<math::Matrix4x4>().set_to_string(+[](Ref ref) {
+        auto& m = ref.value<math::Matrix4x4>();
+        return std::format(
+            "({}, {}, {}, {}\n {}, {}, {}, {}\n {}, {}, {}, {}\n {}, {}, {}, "
+            "{})",
+            m.mat[0][0],
+            m.mat[0][1],
+            m.mat[0][2],
+            m.mat[0][3],
+            m.mat[1][0],
+            m.mat[1][1],
+            m.mat[1][2],
+            m.mat[1][3],
+            m.mat[2][0],
+            m.mat[2][1],
+            m.mat[2][2],
+            m.mat[2][3],
+            m.mat[3][0],
+            m.mat[3][1],
+            m.mat[3][2],
+            m.mat[3][3]
+        );
+    });
 }
 
 export Cls& cls(const Type& type) {
+    static bool initialized = false;
+    if (!initialized) {
+        init_builtin_types();
+        initialized = true;
+    }
     auto iter = Cls::s_classes.find(type.id());
     if (iter == Cls::s_classes.end()) {
         log::fatal("Class not found: {}", type.name());
     }
     return iter->second;
+}
+
+export template<class T>
+Cls& cls() {
+    return cls(type<T>());
 }
 
 } // namespace triple::refl
