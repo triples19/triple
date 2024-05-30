@@ -4,7 +4,7 @@ Triple is a simple, modular, data-driven game engine written in **modern C++**. 
 
 ## Current Status
 
-As a game engine developed by a single person, Triple provides a limit amount of features today as shown below:
+As a game engine developed by a single person, Triple provides a small set of features today as shown below:
 
 * **Module**: Using C++20 Modules for better code structure and faster compile time
 * **Data**: Component memory management based on Archetypes
@@ -39,10 +39,10 @@ void start(Commands commands) {
             .add(Velocity {.dx = 0.1f, .dy = 0.1f});
 }
 
-void update(Query<Position, Velocity> query) {
+void update(Resource<Time> time, Query<Position, Velocity> query) {
     for (auto [pos, vel] : query) {
-        pos.x += vel.dx;
-        pos.y += vel.dy;
+        pos.x += vel.dx * time->delta();
+        pos.y += vel.dy * time->delta();
     }
 }
 
