@@ -58,7 +58,7 @@ void update_imgui(
     if (!show_ui)
         return;
 
-    ImGui::ShowDemoWindow();
+    // ImGui::ShowDemoWindow();
 
     {
         ImGui::Begin("Archetypes");
@@ -114,7 +114,7 @@ void update_imgui(
                             if (t.is(type<int>()))
                                 str = std::to_string(val.value<int>());
                             else if (t.is(type<float>()))
-                                str = std::to_string((int)val.value<float>());
+                                str = std::format("{:.1f}", val.value<float>());
                             else if (t.is(type<Vector2>()))
                                 str = std::format(
                                     "{:.1f}, {:.1f}",

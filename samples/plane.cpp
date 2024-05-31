@@ -354,7 +354,7 @@ void update_ui(
 
     ImGui::Text("Score: %d", game->score);
     ImGui::Text("Health: %d", player.health);
-    if (ImGui::CollapsingHeader("Settings")) {
+    if (ImGui::CollapsingHeader("Settings", ImGuiTreeNodeFlags_DefaultOpen)) {
         if (show_debug && ImGui::Button("Hide Debug") ||
             !show_debug && ImGui::Button("Show Debug")) {
             show_debug = !show_debug;
