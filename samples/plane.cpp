@@ -347,10 +347,19 @@ void update_ui(
     Query<Enemy> q_enemy,
     Resource<Game> game,
     Resource<Time> time,
-    Resource<AppStates> app_states
+    Resource<AppStates> app_states,
+    Resource<KeyInput> key_input
 ) {
+    static bool show_menu = true;
+    if (key_input->just_pressed(KeyCode::Escape)) {
+        show_menu = !show_menu;
+    }
+    if (!show_menu) {
+        return;
+    }
+
     auto [player, transform, sprite, collider] = *q_player.begin();
-    ImGui::Begin("Game");
+    ImGui::Begin("Game (ESC to show/hide)");
 
     ImGui::Text("Score: %d", game->score);
     ImGui::Text("Health: %d", player.health);

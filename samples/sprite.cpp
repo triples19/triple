@@ -22,8 +22,6 @@ void sprite_system(
     );
     commands.spawn().add(
         Sprite {
-            .color = {1.0f, 1.0f, 1.0f, 1.0f},
-            .anchor = Vector2 {0.5f, 0.5f},
             .texture = asset_server->load<Texture2D>("awesomeface.png"),
         },
         Transform2D {

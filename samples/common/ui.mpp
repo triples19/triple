@@ -62,7 +62,7 @@ void update_imgui(
 
     {
         ImGui::Begin("Archetypes");
-        ImGui::Text(std::format("FPS: {}", 1.0f / time->delta()).c_str());
+        // ImGui::Text(std::format("FPS: {}", 1.0f / time->delta()).c_str());
 
         World& world = commands.world();
         std::unordered_set<Archetype*> archetypes;
