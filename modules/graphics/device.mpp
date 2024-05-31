@@ -16,10 +16,10 @@ import :buffer;
 namespace triple::graphics {
 
 export class RenderDevice;
-static RenderDevice* s_instance = nullptr;
 
 export class RenderDevice {
   public:
+    static RenderDevice* s_instance;
     static void set_instance(RenderDevice* instance) { s_instance = instance; }
     static RenderDevice* instance() { return s_instance; }
 
@@ -50,5 +50,7 @@ export class RenderDevice {
     ) = 0;
     virtual const refl::Type& frame_buffer_type() = 0;
 };
+
+RenderDevice* RenderDevice::s_instance = nullptr;
 
 } // namespace triple::graphics
