@@ -1,5 +1,6 @@
 import triple.all;
 import samples.common;
+import samples.ui;
 
 using namespace triple;
 
@@ -33,7 +34,10 @@ void sprite_system(
 
 int main() {
     App app;
-    app.add_plugin<SamplesPlugin>().add_system(StartUp, sprite_system).run();
+    app.add_plugin<SamplesPlugin>()
+        .add_plugin<UiPlugin>()
+        .add_system(StartUp, sprite_system)
+        .run();
 
     return 0;
 }

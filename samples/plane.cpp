@@ -38,11 +38,6 @@ struct BoxCollider {
     }
 };
 
-struct CollideEvent {
-    Entity entity_a;
-    Entity entity_b;
-};
-
 struct Player {
     Timer shoot_timer;
     float speed;
@@ -69,9 +64,6 @@ void register_types() {
     Cls::new_cls<BoxCollider>()
         .add_member("size", &BoxCollider::size)
         .add_member("offset", &BoxCollider::offset);
-    Cls::new_cls<CollideEvent>()
-        .add_member("entity_a", &CollideEvent::entity_a)
-        .add_member("entity_b", &CollideEvent::entity_b);
     Cls::new_cls<Player>()
         // .add_member("shoot_timer", &Player::shoot_timer)
         .add_member("speed", &Player::speed)
@@ -298,17 +290,16 @@ void spawn_enemy(
 void update_enemy(
     Commands commands,
     Resource<AssetServer> asset_server,
-    Query<Enemy, Transform2D, BoxCollider> q_enemy,
+    Query<Entity, Enemy, Transform2D, BoxCollider> q_enemy,
     Query<Player, Transform2D, BoxCollider> q_player,
     Resource<Time> time,
     Resource<Window> win,
     Resource<Game> game
 ) {
     auto [player, transform_player, collider_player] = *q_player.begin();
-    for (auto iter = q_enemy.begin(); iter != q_enemy.end(); ++iter) {
-        auto [enemy, transform, collider] = *iter;
+    for (auto [enemy_entity, enemy, transform, collider] : q_enemy) {
         if (enemy.health <= 0) {
-            commands.entity(iter.entity()).despawn();
+            commands.entity(enemy_entity).despawn();
             game->score++;
             continue;
         }
@@ -316,14 +307,14 @@ void update_enemy(
                 collider.rect_global(transform),
                 collider_player.rect_global(transform_player)
             )) {
-            commands.entity(iter.entity()).despawn();
+            commands.entity(enemy_entity).despawn();
             player.health--;
             game->score++;
             continue;
         }
         transform.position.y -= enemy.speed * time->delta();
         if (transform.position.y < -win->height / 2 - 16.0f * 3.0f) {
-            commands.entity(iter.entity()).despawn();
+            commands.entity(enemy_entity).despawn();
         }
         enemy.shoot_timer.tick(time->delta());
         if (enemy.shoot_timer.just_finished()) {
@@ -456,7 +447,6 @@ int main() {
     App app;
     app.add_plugin<SamplesPlugin>()
         .add_plugin<UiPlugin>()
-        .add_event<CollideEvent>()
         .add_resource<Game>(Game {
             .enemy_spawn_timer = {enemy_spawn_cooldown, TimerMode::Repeating},
             .score = 0

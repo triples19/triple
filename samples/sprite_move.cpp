@@ -1,7 +1,7 @@
-#include "debug_macros.hpp"
-
 import triple.all;
 import samples.common;
+
+using namespace triple;
 
 void setup_scene(
     Commands commands,
@@ -55,11 +55,6 @@ void move_sprite(
 int main() {
     App app;
     app.add_plugin<SamplesPlugin>()
-        .add_plugin<WindowPlugin>()
-        .add_plugin<OpenGLPlugin>()
-        .add_plugin<GraphicsPlugin>()
-        .add_plugin<RenderPlugin>()
-        .add_plugin<SpritePlugin>()
         .add_system(StartUp, setup_scene)
         .add_system(Update, move_sprite)
         .run();
