@@ -280,6 +280,72 @@ class Optional {
 export template<class T>
 class Optional<T&> {
   public:
+    constexpr Optional() : m_ref(nullptr) {}
+    constexpr Optional(NullOpt) : m_ref(nullptr) {}
+    constexpr Optional(T& ref) : m_ref(&ref) {}
+    Optional(T&&) = delete;
+    constexpr Optional(const Optional& other) : m_ref(other.m_ref) {}
+    explicit constexpr Optional(InPlace, T& ref) : m_ref(&ref) {}
+    explicit Optional(InPlace, T&&) = delete;
+    ~Optional() = default;
+
+    Optional& operator=(NullOpt) {
+        m_ref = nullptr;
+        return *this;
+    }
+
+    Optional& operator=(T& ref) {
+        m_ref = &ref;
+        return *this;
+    }
+
+    void swap(Optional& other) { std::swap(m_ref, other.m_ref); }
+
+    constexpr T& value() const { return *m_ref; }
+    constexpr T* operator->() const { return m_ref; }
+    constexpr T& operator*() const { return *m_ref; }
+
+    explicit constexpr operator bool() const { return m_ref != nullptr; }
+    constexpr bool has_value() const { return m_ref != nullptr; }
+
+    void reset() { m_ref = nullptr; }
+
+    constexpr auto value_or(T& default_value) const {
+        return m_ref ? *m_ref : default_value;
+    }
+
+    template<class F>
+        requires is_specialization<std::invoke_result_t<F, T&>, Optional>
+    constexpr auto and_then(F&& f) const {
+        if (m_ref) {
+            return std::invoke(std::forward<F>(f), *m_ref);
+        } else {
+            return std::remove_cvref_t<std::invoke_result_t<F, T&>> {};
+        }
+    }
+
+    template<class F>
+        requires transform_concept<F, T&>
+    constexpr auto transform(F&& f) const {
+        using U = std::remove_cv_t<std::invoke_result_t<F, T&>>;
+        if (m_ref) {
+            return Optional<U> {std::invoke(std::forward<F>(f), *m_ref)};
+        } else {
+            return Optional<U> {nullopt};
+        }
+    }
+
+    template<std::invocable<> F>
+        requires std::
+            same_as<std::remove_cvref_t<std::invoke_result_t<F>>, Optional>
+        constexpr Optional or_else(F&& f) const {
+        if (m_ref) {
+            return *this;
+        } else {
+            return std::invoke(std::forward<F>(f));
+        }
+    }
+
   private:
     T* m_ref;
 };
