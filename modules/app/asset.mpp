@@ -12,6 +12,10 @@ import triple.base;
 import triple.refl;
 import :app;
 
+#ifndef TRIPLE_ASSETS_PATH
+#    define TRIPLE_ASSETS_PATH ""
+#endif
+
 namespace triple::app {
 
 using HandleId = std::uint32_t;
@@ -90,7 +94,13 @@ class Assets {
 
 export class AssetServer {
   public:
-    AssetServer() = default;
+    AssetServer() {
+        if (std::string(TRIPLE_ASSETS_PATH).empty()) {
+            set_assets_dir(std::filesystem::current_path());
+        } else {
+            set_assets_dir(TRIPLE_ASSETS_PATH);
+        }
+    }
     ~AssetServer() {
         for (auto& [type_id, record] : m_assets) {
             for (auto& [id, asset] : record.assets->assets()) {

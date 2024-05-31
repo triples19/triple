@@ -1,11 +1,15 @@
-add_rules("mode.debug", "mode.release")
-set_languages("c++20")
+add_rules("mode.debug", "mode.release", "mode.releasedbg")
+set_languages("c++23")
 
-add_requires("catch2", "glfw", "stb", "box2d")
+add_requires("catch2", "stb", "box2d")
+add_requires("glfw", {configs = {shared = false}})
 add_requires("imgui", {configs = {glfw = true, opengl3 = true}})
 add_packages("glfw", "stb", "box2d")
 
 set_warnings("all")
+
+local project_dir = os.scriptdir():gsub("\\", "/")
+add_cxxflags("-DTRIPLE_ASSETS_PATH=\"" .. project_dir .. "/assets\"")
 
 includes("thirdparty")
 includes("modules")
