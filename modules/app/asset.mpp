@@ -116,6 +116,8 @@ export class AssetServer {
         m_assets_dir = path;
     }
 
+    std::filesystem::path assets_dir() const { return m_assets_dir; }
+
     template<class T>
     Handle<T> load(const std::filesystem::path& path) {
         auto iter = m_assets.find(refl::type<T>().id());
