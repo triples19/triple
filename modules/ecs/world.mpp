@@ -21,6 +21,13 @@ import :schedule;
 
 namespace triple::ecs {
 
+template<class>
+struct SystemAddParamHelper;
+template<class... Args>
+struct SystemAddParamHelper<std::tuple<Args...>> {
+    static void run(System& sys) { (sys.add_param<Args>(), ...); }
+};
+
 export struct EntityRecord {
     Archetype* m_archetype;
     std::size_t m_row;
@@ -92,9 +99,11 @@ export class World {
     System& system(F f) {
         using trait = function_traits<F>;
         auto& sys = system();
-        [&]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
-            sys.add_params<trait::template arg_type<ArgIdx>...>();
-        }(std::make_index_sequence<trait::arg_size>());
+        // [&]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
+        //     // sys.add_params<trait::template arg_type<ArgIdx>...>();
+        //     (sys.add_param<trait::template arg_type<ArgIdx>>(), ...);
+        // }(std::make_index_sequence<trait::arg_size>());
+        SystemAddParamHelper<typename trait::args_tuple>::run(sys);
         sys.callback(f);
         return sys;
     }
@@ -173,7 +182,7 @@ export class World {
 
     template<class T>
     T& get_component(Entity entity) {
-        return get_component(entity, refl::type<T>()).value<T>();
+        return get_component(entity, refl::type<T>()).template value<T>();
     }
 
     bool has_component(Entity entity, const refl::Type& component_type) {

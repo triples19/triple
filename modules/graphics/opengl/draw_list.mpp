@@ -1,10 +1,12 @@
 module;
 #include <glad/glad.h>
 #include <variant>
+#include <vector>
 
 export module triple.graphics.opengl:draw_list;
 import triple.graphics;
 import triple.base;
+import triple.math;
 import :utils;
 import :shader;
 import :texture2d;
@@ -85,7 +87,7 @@ export class DrawListOpenGL : public DrawList {
         glBindBuffer(GL_ARRAY_BUFFER, bufferGL->handler());
 
         const auto& attributes = m_pipeline->vertex_layout().attributes;
-        for (const auto& attr : attributes) {
+        for (auto& attr : attributes) {
             glEnableVertexAttribArray(attr.location);
             glVertexAttribPointer(
                 attr.location,

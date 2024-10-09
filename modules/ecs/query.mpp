@@ -16,7 +16,9 @@ import :archetype;
 import :utils;
 
 // Not including <tuple> in user code causing a bug in MSVC (error C3643)
+#ifdef _MSC_VER
 export import <tuple>;
+#endif
 
 namespace triple::ecs {
 

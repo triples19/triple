@@ -14,13 +14,13 @@ namespace triple::window {
 
 export enum class KeyCode : int32_t {
 #define KEY_CODE(name, code) name = code,
-#include "KeyCode.def"
+#include "keycode.def"
 #undef KEY_CODE
 };
 
 export constexpr KeyCode c_key_codes[] = {
 #define KEY_CODE(name, code) KeyCode::name,
-#include "KeyCode.def"
+#include "keycode.def"
 #undef KEY_CODE
 };
 
@@ -29,7 +29,7 @@ export constexpr const char* key_code_to_string(KeyCode keyCode) noexcept {
 #define KEY_CODE(name, code) \
     case KeyCode::name:      \
         return #name;
-#include "KeyCode.def"
+#include "keycode.def"
 #undef KEY_CODE
     }
     return "Unknown";

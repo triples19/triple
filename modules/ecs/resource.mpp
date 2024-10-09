@@ -19,10 +19,11 @@ class Resource : GenericResource {
   public:
     using ResourceType = T;
     Resource() : GenericResource(refl::type<T>()) {};
-    Resource(const GenericResource& resource) : GenericResource(resource.get()) {};
+    Resource(const GenericResource& resource) :
+        GenericResource(resource.get()) {};
 
-    T& get() { return GenericResource::get().value<T>(); }
-    const T& get() const { return GenericResource::get().value<T>(); }
+    T& get() { return GenericResource::get().template value<T>(); }
+    const T& get() const { return GenericResource::get().template value<T>(); }
     T& operator*() { return get(); }
     const T& operator*() const { return get(); }
     T* operator->() { return &get(); }
@@ -44,10 +45,13 @@ class LocalResource : GenericLocalResource {
   public:
     using ResourceType = T;
     LocalResource() : GenericLocalResource(refl::type<T>()) {};
-    LocalResource(const GenericLocalResource& resource) : GenericLocalResource(resource.get()) {};
+    LocalResource(const GenericLocalResource& resource) :
+        GenericLocalResource(resource.get()) {};
 
-    T& get() { return GenericLocalResource::get().value<T>(); }
-    const T& get() const { return GenericLocalResource::get().value<T>(); }
+    T& get() { return GenericLocalResource::get().template value<T>(); }
+    const T& get() const {
+        return GenericLocalResource::get().template value<T>();
+    }
     T& operator*() { return get(); }
     const T& operator*() const { return get(); }
     T* operator->() { return &get(); }

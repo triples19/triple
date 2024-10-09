@@ -11,10 +11,11 @@ set_warnings("all")
 local project_dir = os.scriptdir():gsub("\\", "/")
 add_cxxflags("-DTRIPLE_ASSETS_PATH=\"" .. project_dir .. "/assets\"")
 
+add_cxxflags("clang::-Wno-reserved-user-defined-literal")
+
 includes("thirdparty")
 includes("modules")
 includes("samples")
-
 
 after_link(function(target)
     local ifc_dir = target:autogendir()

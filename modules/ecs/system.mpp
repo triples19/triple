@@ -39,8 +39,18 @@ export class SystemCommands {
     System& m_system;
 };
 
+template<class>
+struct SystemCallbackHelper;
+template<class... Args>
+struct SystemCallbackHelper<std::tuple<Args...>> {
+    template<class F>
+    static void run(SystemCommands& commands, System& sys, F f);
+};
+
 export class System {
     friend class SystemCommands;
+    template<class>
+    friend struct SystemCallbackHelper;
 
   public:
     // using Callback = void (*)(SystemCommands&);
@@ -57,18 +67,27 @@ export class System {
     System& callback(F f) {
         using trait = function_traits<F>;
         m_callback = [f, this](SystemCommands& commands) {
-            [f,
-             &commands,
-             this]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
-                if constexpr (std::is_same_v<trait::return_type, void>) {
-                    f(commands.get_param<trait::template arg_type<ArgIdx>>()...
-                    );
-                } else {
-                    this->m_out =
-                        f(commands.get_param<trait::template arg_type<ArgIdx>>(
-                        )...);
-                }
-            }(std::make_index_sequence<trait::arg_size>());
+            // [f,
+            //  &commands,
+            //  this]<size_t... ArgIdx>(std::index_sequence<ArgIdx...>) {
+            //     if constexpr (std::is_same_v<
+            //                       typename trait::return_type,
+            //                       void>) {
+            //         f(commands.get_param<trait::template
+            //         arg_type<ArgIdx>>()...
+            //         );
+            //     } else {
+            //         this->m_out =
+            //             f(commands.get_param<trait::template
+            //             arg_type<ArgIdx>>(
+            //             )...);
+            //     }
+            // }(std::make_index_sequence<trait::arg_size>());
+            SystemCallbackHelper<typename trait::args_tuple>::run(
+                commands,
+                *this,
+                f
+            );
         };
         return *this;
     }
@@ -156,6 +175,22 @@ decltype(auto) SystemCommands::get_param() {
         );
     } else if constexpr (std::same_as<RawT, Commands>) {
         return commands();
+    }
+}
+
+template<class... Args>
+template<class F>
+void SystemCallbackHelper<std::tuple<Args...>>::run(
+    SystemCommands& commands,
+    System& sys,
+    F f
+) {
+    if constexpr (std::is_same_v<
+                      typename function_traits<F>::return_type,
+                      void>) {
+        f(commands.get_param<Args>()...);
+    } else {
+        sys.m_out = f(commands.get_param<Args>()...);
     }
 }
 
