@@ -14,6 +14,7 @@ export class Member {
   public:
     Member(const std::string& name, const Type& type, const Type& parent_type) :
         m_name(name), m_type(&type), m_parent_type(&parent_type) {}
+    virtual ~Member() = default;
 
     virtual Ref get(Ref obj) const = 0;
     virtual void set(Ref obj, Ref value) const = 0;

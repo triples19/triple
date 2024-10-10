@@ -122,7 +122,6 @@ void render_sprite(
     if (q_camera.empty()) {
         return;
     }
-    auto* device = render_res->device;
     auto* draw_list = render_res->draw_list;
     auto& camera = q_camera.iter().get<Camera>();
     auto& camera_transform = q_camera.iter().get<Transform2D>();
@@ -133,7 +132,6 @@ void render_sprite(
     sprite_res->pipeline->set_uniform("view", view);
     sprite_res->pipeline->set_uniform("proj", proj);
 
-    auto sprite_iter = q_sprite.iter();
     for (auto [sprite, transform] : q_sprite) {
         auto& texture = asset_server->get(sprite.texture);
 

@@ -33,7 +33,7 @@ export class RenderDeviceOpenGL : public RenderDevice {
     create_shader(ShaderStage stage, const std::string& src) override {
         return new ShaderOpenGL(stage, src);
     }
-    virtual const refl::Type& shader_type() {
+    virtual const refl::Type& shader_type() override {
         return refl::type<ShaderOpenGL>();
     }
 

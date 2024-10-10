@@ -44,7 +44,7 @@ void render_setup(
     });
     render_res->framebuffer = device->create_framebuffer(FramebufferDescriptor {
         .color_attachments = {Attachment {.texture = render_res->color_tex}},
-        .depth_attachment = nullptr,
+        .depth_attachment = {nullptr},
     });
     render_res->draw_list = device->create_draw_list();
 }
@@ -53,7 +53,6 @@ void render_start(
     Resource<RenderResource> render_res,
     Resource<Window> win_res
 ) {
-    auto device = render_res->device;
     auto draw_list = render_res->draw_list;
     render_res->color_tex
         ->update_data(nullptr, win_res->width, win_res->height);
@@ -66,7 +65,6 @@ void render_start(
 }
 
 void render_end(Resource<RenderResource> render_res, Resource<Window> win_res) {
-    auto device = render_res->device;
     auto draw_list = render_res->draw_list;
     draw_list->end();
     // NOTE: temporary solution, move it to window system
