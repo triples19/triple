@@ -4,6 +4,7 @@ module;
 
 export module triple.refl:value;
 import :ref;
+import :type;
 
 namespace triple::refl {
 

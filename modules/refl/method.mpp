@@ -8,6 +8,9 @@ import :type;
 import :type_of;
 import :callable;
 import :utils;
+import :qual_type;
+import :var;
+import :ref;
 
 namespace triple::refl {
 

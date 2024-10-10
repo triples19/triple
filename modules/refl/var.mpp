@@ -1,6 +1,7 @@
 export module triple.refl:var;
 import :value;
 import :ref;
+import :type;
 
 namespace triple::refl {
 
