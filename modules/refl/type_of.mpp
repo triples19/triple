@@ -45,19 +45,19 @@ consteval auto get_type_name_str_view() {
 }
 
 export template<class T>
-const Type& type() {
+Type type() {
     // static Type* ty = nullptr;
     // if (ty == nullptr) {
     //     ty = new Type(typeid(T).name(), sizeof(T));
     // }
-    static Type ty(get_type_name_str_view<T>(), sizeof(T));
-    return ty;
+    static TypeData ty(get_type_name_str_view<T>(), sizeof(T));
+    return Type {ty};
 }
 
 export template<>
-const Type& type<void>() {
-    static Type ty("void", 0);
-    return ty;
+Type type<void>() {
+    static TypeData ty("void", 0);
+    return Type {ty};
 }
 
 template<typename T>
@@ -79,7 +79,7 @@ template<typename T>
 using raw_type = typename remove_qualifiers<T>::type;
 
 export template<typename T>
-const Type& type_of(T&&) {
+Type type_of(T&&) {
     return type<raw_type<T>>();
 }
 

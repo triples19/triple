@@ -16,7 +16,7 @@ export class QualType {
         Const = (1 << 2),
     };
 
-    QualType(const Type& type, Flags flags = None) : m_type(&type), m_flags(flags) {}
+    QualType(Type type, Flags flags = None) : m_type(type), m_flags(flags) {}
 
     template<typename T>
     QualType() {
@@ -36,10 +36,10 @@ export class QualType {
 
     bool is_const() const { return m_flags & Const; }
 
-    const Type& type() const { return *m_type; }
+    Type type() const { return m_type; }
 
   private:
-    const Type* m_type;
+    Type m_type;
     unsigned int m_flags;
 };
 } // namespace triple::refl

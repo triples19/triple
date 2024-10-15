@@ -13,7 +13,7 @@ namespace triple::refl {
 export class Member {
   public:
     Member(const std::string& name, const Type& type, const Type& parent_type) :
-        m_name(name), m_type(&type), m_parent_type(&parent_type) {}
+        m_name(name), m_type(type), m_parent_type(parent_type) {}
     virtual ~Member() = default;
 
     virtual Ref get(Ref obj) const = 0;
@@ -21,12 +21,12 @@ export class Member {
 
     const std::string& name() const { return m_name; }
 
-    const Type& type() const { return *m_type; }
+    Type type() const { return m_type; }
 
   protected:
     std::string m_name;
-    const Type* m_type;
-    const Type* m_parent_type;
+    Type m_type;
+    Type m_parent_type;
 };
 
 export template<typename P>

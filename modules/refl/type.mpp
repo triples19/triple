@@ -14,65 +14,76 @@ export constexpr unsigned int c_max_types = 1000U;
 export using TypeId = std::uint32_t;
 static TypeId s_type_index = 2;
 
-export class Type;
+export class TypeData {
+    friend class Type;
 
-// template<class T>
-// const Type& type();
-
-export class Type {
   public:
-    explicit Type() : m_id(0), m_name("") {}
-    explicit Type(std::string_view name, std::size_t size) :
+    explicit TypeData() : m_id(0), m_name("") {}
+    explicit TypeData(std::string_view name, std::size_t size) :
         m_id(s_type_index++), m_name(name), m_size(size) {}
-    explicit Type(std::string_view name, const Type& base, std::size_t size) :
-        Type(name, size) {
+    explicit TypeData(
+        std::string_view name,
+        const TypeData& base,
+        std::size_t size
+    ) : TypeData(name, size) {
         m_base = &base;
     }
-    ~Type() {}
+    ~TypeData() {}
 
-    Type(Type&) = delete;
-    Type& operator=(const Type&) = delete;
-    Type(Type&&) = delete;
-
-    friend bool operator==(const Type& lhs, const Type& rhs) {
-        return lhs.id() == rhs.id();
-    }
-
-    friend bool operator<(const Type& lhs, const Type& rhs) {
-        return lhs.id() < rhs.id();
-    }
-
-    bool is(const Type& type) const {
-        if (type == *this)
-            return true;
-        else if (m_base)
-            return m_base->is(type);
-        else
-            return false;
-    }
-
-    std::string_view name() const {
-        auto last_colon = m_name.find_last_of(':');
-        if (last_colon != std::string_view::npos)
-            return m_name.substr(last_colon + 1);
-        else
-            return m_name;
-    }
-
-    std::string_view full_name() const { return m_name; }
-
-    std::size_t size() const { return m_size; }
-
-    TypeId id() const { return m_id; }
+    TypeData(TypeData&) = delete;
+    TypeData& operator=(const TypeData&) = delete;
+    TypeData(TypeData&&) = delete;
 
   private:
-    Type(int) : m_id(1), m_name("Type") {}
+    TypeData(int) : m_id(1), m_name("Type") {}
 
   private:
     TypeId m_id;
     std::string_view m_name;
     std::size_t m_size;
-    const Type* m_base = nullptr;
+    const TypeData* m_base = nullptr;
+};
+
+export class Type {
+  public:
+    Type(const TypeData& data) : m_data(&data) {}
+    // Type(std::nullptr_t) : m_data(nullptr) {}
+
+    Type(Type&&) = default;
+    Type(const Type& other) = default;
+    Type& operator=(Type&&) = default;
+    Type& operator=(const Type&) = default;
+
+    friend bool operator==(Type lhs, Type rhs) { return lhs.id() == rhs.id(); }
+    friend bool operator<(Type lhs, Type rhs) { return lhs.id() < rhs.id(); }
+
+    // operator bool() const { return m_data != nullptr; }
+
+    bool is(Type type) const {
+        if (type == *this)
+            return true;
+        else if (m_data->m_base)
+            return Type(*m_data->m_base).is(type);
+        else
+            return false;
+    }
+
+    std::string_view name() const {
+        auto last_colon = m_data->m_name.find_last_of(':');
+        if (last_colon != std::string_view::npos)
+            return m_data->m_name.substr(last_colon + 1);
+        else
+            return m_data->m_name;
+    }
+
+    std::string_view full_name() const { return m_data->m_name; }
+
+    std::size_t size() const { return m_data->m_size; }
+
+    TypeId id() const { return m_data->m_id; }
+
+  private:
+    const TypeData* m_data;
 };
 
 } // namespace triple::refl

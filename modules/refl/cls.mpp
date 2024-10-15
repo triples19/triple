@@ -25,7 +25,7 @@ export class Cls {
         return iter->second;
     }
 
-    Cls(const Type& type) : m_type(type) {}
+    Cls(Type type) : m_type(type) {}
 
     ~Cls() {
         for (auto& [name, member] : m_members) {
@@ -63,7 +63,7 @@ export class Cls {
     }
 
   private:
-    const Type& m_type;
+    Type m_type;
     std::unordered_map<std::string, Member*> m_members;
     ToStringFunc m_to_string;
 };

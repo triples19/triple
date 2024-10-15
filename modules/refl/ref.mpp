@@ -1,6 +1,7 @@
 module;
 #include <concepts>
 #include <cstring>
+#include <optional>
 #include <type_traits>
 
 export module triple.refl:ref;
@@ -17,30 +18,34 @@ concept not_same_as = !std::same_as<T, U>;
 
 export class Ref {
   public:
-    Ref() : m_type(nullptr), m_value(nullptr) {}
-    Ref(std::nullptr_t) : m_type(nullptr), m_value(nullptr) {}
-    Ref(void* value, const Type& type) : m_type(&type), m_value(value) {}
+    Ref() : m_type(std::nullopt), m_value(nullptr) {}
+    Ref(std::nullptr_t) : m_type(std::nullopt), m_value(nullptr) {}
+    Ref(void* value, Type type) : m_type(type), m_value(value) {}
     // explicit Ref(const Type& type) : m_type(&type), m_value(nullptr) {}
 
     template<typename T>
-    Ref(T* object) : m_type(&type_of(object)), m_value(object) {}
+    Ref(T* object) : m_type(type_of(object)), m_value(object) {}
 
     template<typename T>
     Ref(const T* object) :
-        m_type(&type_of(object)), m_value(const_cast<T*>(object)) {}
+        m_type(type_of(object)), m_value(const_cast<T*>(object)) {}
 
     template<typename T>
         requires not_same_as<T, Ref>
     Ref(const T& object) :
-        m_type(&type_of(object)), m_value(const_cast<T*>(&object)) {}
+        m_type(type_of(object)), m_value(const_cast<T*>(&object)) {}
 
     template<typename T>
         requires not_same_as<T, Ref>
-    Ref(T& object) : m_type(&type_of(object)), m_value(&object) {}
+    Ref(T& object) : m_type(type_of(object)), m_value(&object) {}
 
     Ref(const Ref& ref) = default;
     Ref(Ref&& ref) = default;
-    Ref& operator=(const Ref& ref) = default;
+    Ref& operator=(const Ref& ref) {
+        m_type = ref.m_type;
+        m_value = ref.m_value;
+        return *this;
+    }
     Ref& operator=(Ref&& ref) = default;
 
     inline bool operator==(const Ref& other) const {
@@ -51,7 +56,7 @@ export class Ref {
     }
     inline explicit operator bool() const { return m_value != nullptr; }
 
-    const Type& type() const { return *m_type; }
+    Type type() const { return *m_type; }
 
     void* address() { return m_value; }
 
@@ -72,7 +77,7 @@ export class Ref {
     }
 
   private:
-    const Type* m_type;
+    std::optional<Type> m_type;
     void* m_value;
 };
 

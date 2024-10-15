@@ -63,7 +63,7 @@ export class Value {
 
     Ref ref() const { return m_handler->ref(*this); }
 
-    const Type& type() const { return ref().type(); }
+    Type type() const { return ref().type(); }
 
     bool empty() const { return m_handler->empty(); }
 

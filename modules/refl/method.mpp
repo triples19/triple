@@ -25,10 +25,10 @@ export class Method : public Callable {
 
     virtual Var invoke_variadic(const std::vector<Ref>& args) const = 0;
 
-    const Type* instance_type() const { return m_instance_type; }
+    // Type instance_type() const { return m_instance_type; }
 
   protected:
-    const Type* m_instance_type;
+    // Type m_instance_type;
 };
 
 export template<typename P>
